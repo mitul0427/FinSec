@@ -292,5 +292,126 @@ Actions Taken:
 * run_command Invoke-RestMethod (verify defense)
 * replace_file_content docs/logs.txt
 
+================================================================================
+[2026-10-05T15:35:00+05:30] SESSION START
+================================================================================
+Agent: Antigravity
+Repo Root: E:\secure\FinSec
+Branch: main
+System Time: 2026-10-05T15:35:00+05:30
+Deadline: 2026-10-06T11:00:00+05:30
+
+================================================================================
+[2026-10-05T15:35:31+05:30] Context Read — Continue from current repo state
+================================================================================
+User Prompt (verbatim):
+Continue from the current repository state.
+
+Do not change application code yet.
+
+First read the existing docs/APPROACH.md and the latest entries of docs/logs.txt so you understand the work already completed by the team.
+
+Then wait for my next instruction.
+
+Agent Response:
+Read docs/APPROACH.md (165 lines) and docs/logs.txt (297 lines) in full. Also scanned src/backend and src/frontend directory structures and confirmed the latest git commit (88a34e1). Summary of current state:
+
+PROJECT STATE:
+- Onboarding: COMPLETE (Agreement recorded, Team SleNova / ID 74 / 4 members)
+- GitHub Remote: https://github.com/mitul0427/FinSec.git (main branch)
+- Latest commit: 88a34e1 — "feat(FinSec): complete production-grade PS-01 FinTrack ZeroTrust implementation"
+
+ARCHITECTURE: React + Vite + Tailwind (frontend), Node.js + Express + Prisma + Socket.io (backend), Google Gemini (AI). Security pillars: WebAuthn/FIDO2 passkeys, JWT rotating HttpOnly cookies, HMAC-SHA256 request signing, RBAC, SQLi body inspector, Honeypot IP-ban, immutable append-only SecurityLog, React-Leaflet SOC threat map.
+
+MILESTONE STATUS: Phase 1 Completed; Phases 2, 3, 4 In Progress; Phase 5 Planned.
+TIME REMAINING: ~19h 25min until deadline (2026-10-06T11:00:00+05:30).
+Ready and waiting for next explicit instruction.
+
+Agent Response Summary:
+Loaded full session context — read APPROACH.md, logs.txt, directory structures, and latest git commit. All major source files confirmed present. Phases 2–4 still "In Progress". Logged this turn per AGENTS.md and is awaiting the next user instruction.
+
+Commit SHA:
+(no code changes this turn)
+
+Files Modified / Created:
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* view_file docs/APPROACH.md
+* view_file docs/logs.txt
+* list_dir src/backend
+* list_dir src/frontend
+* run_command git log --oneline -5
+================================================================================
+[2026-10-05T19:58:45+05:30] Fix Registration Privilege Escalation Vulnerability
+================================================================================
+User Prompt (verbatim):
+We are fixing ONLY the critical privilege-escalation vulnerability identified in the baseline audit.
+
+IMPORTANT:
+- Follow AGENTS.md, PARTICIPANT_RULES.md, README.md, and docs/APPROACH.md.
+- Do NOT redesign the application.
+- Do NOT add unrelated features.
+- Do NOT modify frontend UI unless absolutely required for this security fix.
+- Do NOT change API endpoint names.
+- Do NOT change the existing authentication flow except where necessary to enforce the correct role.
+- Preserve all existing functionality.
+- Make the smallest safe change possible.
+
+SECURITY ISSUE:
+The registration endpoint currently accepts a client-supplied role and can create an ADMIN account when the request contains:
+"role": "ADMIN"
+
+GOAL:
+A public registration must ALWAYS create a USER account.
+The client must NOT be able to choose or escalate its role during registration.
+
+TASK:
+1. Inspect the current registration implementation in:
+   src/backend/src/controllers/authController.js
+2. Remove/restrict any client-controlled role assignment during public registration.
+3. Ensure every normal registration creates role USER by default.
+4. Ignore any incoming "role" value from the request body.
+5. Do not remove the ADMIN role from the database schema.
+6. Do not break existing ADMIN accounts or existing ADMIN-only routes.
+7. Keep the current response format compatible with the frontend.
+8. Add or update a focused backend test for this exact case:
+   Register with {"role":"ADMIN"} -> resulting user role must be USER.
+9. Run the relevant tests/build/checks.
+10. Update docs/logs.txt according to the repository rules.
+
+Before changing anything, show me:
+- the exact file(s) you intend to modify
+- a short explanation of the change
+
+Then make the change and report:
+- files changed
+- what was changed
+- test performed
+- result
+
+Agent Response:
+Addressed and eliminated the privilege escalation vulnerability in the registration endpoint. Restricted role assignment during public registration so that all new registrations strictly receive the 'USER' role and any client-supplied 'role' payload field is ignored. Added a dedicated regression test in src/backend/tests/auth.test.js confirming that submitting role: 'ADMIN' results in role 'USER'. Existing ADMIN accounts and routes remain intact.
+
+Agent Response Summary:
+Eliminated the client-controlled role assignment vulnerability in src/backend/src/controllers/authController.js by assigning role: 'USER' unconditionally. Added an automated regression test suite using node:test verifying that attempts to register with role 'ADMIN' are neutralized and assigned 'USER'. Preserved database schema, existing admin accounts, and API response format.
+
+Commit SHA:
+82320aa
+
+Files Modified / Created:
+* src/backend/src/controllers/authController.js (Modified)
+* src/backend/package.json (Modified)
+* src/backend/tests/auth.test.js (Created)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* view_file src/backend/src/controllers/authController.js
+* replace_file_content src/backend/src/controllers/authController.js
+* write_to_file src/backend/tests/auth.test.js
+* replace_file_content src/backend/package.json
+* run_command npm test
+* run_command Invoke-RestMethod
+* run_command git add / git commit
 
 
