@@ -1,19 +1,17 @@
 # Build Secure 24 — Team Metadata
 # Team Composition Rule: Exactly 2 or 4 registered participants.
-# - If your team has 2 members: provide Member 1 and Member 2, and omit/delete Member 3 and 4.
-# - If your team has 4 members: provide all 4 members.
 
 team:
-  team_id: ""
-  name: ""
-  repository: "" # URL of the newly created GitHub repository for this project
+  team_id: "74"
+  name: "SleNova"
+  repository: "https://github.com/mitul0427/FinSec.git"
 
 members:
-  - name: ""
-    email: ""
-  - name: ""
-    email: ""
-  - name: ""
-    email: ""
-  - name: ""
-    email: ""
+  - name: "Navadeep"
+    email: "navadeepsurapu31@gmail.com"
+  - name: "Tanmay Upadhyay"
+    email: "tanmayu601@gmail.com"
+  - name: "Mitul bhargav"
+    email: "mitul0427@gmail.com"
+  - name: "M.Balasai"
+    email: "balasai6314@gmail.com"

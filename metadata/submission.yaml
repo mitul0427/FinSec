@@ -4,8 +4,8 @@
 version: "1.0"
 
 submission:
-  team_id: ""
-  repository: ""
+  team_id: "74"
+  repository: "https://github.com/mitul0427/FinSec.git"
   commit_sha: ""
   deployment_url: ""
   submitted_at: ""
