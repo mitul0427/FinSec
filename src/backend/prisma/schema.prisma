@@ -49,8 +49,13 @@ model Transaction {
   description String
   merchant    String?
   receiptUrl  String?
+  ledgerIndex     Int?
+  previousHash    String?
+  transactionHash String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId, ledgerIndex])
 }
 
 model Budget {

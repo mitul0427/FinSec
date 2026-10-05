@@ -9,7 +9,9 @@ import {
   generatePasskeyRegistrationOptions,
   verifyPasskeyRegistration,
   generatePasskeyAuthenticationOptions,
-  verifyPasskeyAuthentication
+  verifyPasskeyAuthentication,
+  getSecurityCenterStatus,
+  logoutAllSessions
 } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -20,6 +22,10 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh', refreshToken);
 router.post('/logout', logout);
+router.post('/logout-all', requireAuth, logoutAllSessions);
+
+// Security Center Telemetry (User-Specific)
+router.get('/security-center', requireAuth, getSecurityCenterStatus);
 
 // User Profile
 router.get('/profile', requireAuth, getProfile);

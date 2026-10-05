@@ -21,6 +21,19 @@ import budgetRoutes from './routes/budgetRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import socRoutes from './routes/socRoutes.js';
+import prisma from './config/prisma.js';
+import { backfillLegacyTransactions } from './services/ledgerService.js';
+
+// Asynchronously backfill any unchained historical transactions on startup
+backfillLegacyTransactions(prisma)
+  .then((count) => {
+    if (count > 0) {
+      console.log(`[Ledger] Backfilled ${count} legacy transaction(s) into cryptographic chain.`);
+    }
+  })
+  .catch((err) => {
+    console.error('[Ledger] Startup legacy backfill warning:', err.message);
+  });
 
 const app = express();
 const server = http.createServer(app);
