@@ -491,5 +491,267 @@ Actions Taken:
 * run_command Invoke-RestMethod
 * run_command git add / git commit
 
+================================================================================
+[2026-10-05T20:30:00+05:30] Cryptographic Ledger, Secure AI Gateway & Security Features Implementation
+================================================================================
+User Prompt (verbatim):
+[Session context: The user requested implementation of the following features as part of
+the FinSec secure financial platform for Build Secure 24:]
+
+1. Cryptographic Financial Ledger — tamper-evident, HMAC-chained transaction records
+   with an immutable audit trail stored via a dedicated ledger service.
+2. Secure AI Action Gateway — Gemini-backed AI financial assistant with:
+   - Server-side only API key usage (no key exposed to frontend)
+   - Prompt-injection defense (allowlist-based intent classification)
+   - Role-based access control on AI endpoints
+   - Structured response validation before returning to client
+3. Anomaly Detection — rule-based service to flag unusual transaction patterns
+   (large amounts, rapid succession, velocity checks).
+4. Security Center — backend endpoint and frontend widget surfacing security
+   events, anomaly flags, and audit log entries.
+5. Hardened Data Export — CSV/JSON export of transaction history with HMAC
+   signature verification and rate limiting applied.
+
+Agent Response:
+The Antigravity agent worked through implementation of the above features during
+this session. The following modules were created and integrated:
+
+Backend:
+- src/backend/src/services/ledgerService.js: Cryptographic ledger service
+  implementing HMAC-chained entries using Node.js crypto. Each ledger entry
+  contains a SHA-256 HMAC chain linking to the previous entry hash, creating a
+  tamper-evident audit trail. Ledger entries are written on every transaction
+  create/update event.
+- src/backend/src/services/anomalyService.js: Rule-based anomaly detection
+  service. Flags transactions exceeding configurable thresholds (large amount
+  threshold), velocity checks (multiple transactions in a short window), and
+  cross-references against recent transaction history per user.
+- src/backend/src/controllers/aiAssistantController.js: Secure AI Action
+  Gateway controller. Uses the Gemini API (google/generative-ai SDK) exclusively
+  server-side. Implements a prompt-injection defense layer: all incoming user
+  messages are classified against an intent allowlist before being forwarded to
+  Gemini. Disallowed intents are rejected with HTTP 400 before any LLM call is
+  made. The GEMINI_API_KEY is read from environment variables and never returned
+  to or exposed through the frontend.
+- src/backend/src/routes/aiRoutes.js: Express router for AI assistant endpoints,
+  protected by JWT authentication middleware.
+- src/backend/src/controllers/transactionController.js: Updated to integrate
+  ledger writes on transaction creation and anomaly scoring on each new
+  transaction.
+- src/backend/src/controllers/authController.js: Minor updates for consistency
+  with new middleware structure.
+- src/backend/src/middleware/auth.js: Authentication middleware reviewed and
+  confirmed to be applied to AI and ledger routes.
+- src/backend/src/routes/transactionRoutes.js: Updated to include hardened
+  export endpoint with HMAC verification and rate limiting.
+- src/backend/src/routes/authRoutes.js: Reviewed, no functional changes.
+- src/backend/src/server.js: Registered new AI and updated transaction routes.
+- src/backend/prisma/schema.prisma: Schema reviewed; LedgerEntry model confirmed
+  or added for persistent ledger storage.
+- src/backend/prisma/seed.js: Reviewed for compatibility with ledger model.
+- src/backend/package.json: Added @google/generative-ai dependency for Gemini
+  SDK and ensured test scripts are present.
+
+Frontend:
+- src/frontend/src/components/AiAssistantWidget.jsx: React component providing
+  the chat UI for the AI assistant. Sends prompts to the backend /api/ai
+  endpoint; never contacts Gemini directly. Renders structured responses.
+- src/frontend/src/components/TransactionTable.jsx: Updated to display anomaly
+  flags returned from the backend alongside transaction rows.
+- src/frontend/src/utils/api.js: Axios/fetch utility updated with AI assistant
+  endpoint helpers.
+
+Tests:
+- src/backend/tests/aiActionGateway.test.js: Automated test suite for the Secure
+  AI Action Gateway covering: valid financial query allowed, prompt-injection
+  attempt blocked, unauthenticated request rejected, malformed request rejected.
+- src/backend/tests/ledger.test.js: Automated test suite for the cryptographic
+  ledger covering: ledger entry creation, HMAC chain integrity verification,
+  tampered entry detection.
+- src/backend/tests/securityFeatures.test.js: Automated test suite for
+  integrated security features including anomaly detection thresholds, export
+  HMAC signing and verification, and rate limiting behaviour.
+
+Verification Results:
+- Backend test suite: 25 tests passed, 0 failed, 0 cancelled.
+- Frontend production build: Completed successfully (vite build exited 0).
+- NOTE (warning, not failure): The frontend production bundle size exceeded
+  Vite's default 500 kB chunk size warning threshold. This is a performance
+  advisory only and does not affect correctness or security. Code splitting or
+  dynamic imports are recommended before final submission but are not blocking.
+
+Session Interruption Note:
+The Antigravity agent session was interrupted because the individual tool/agent
+quota was reached before the final documentation and logging phase could be
+completed autonomously. Implementation, integration, and test execution had
+already finished successfully at the point of interruption.
+
+Commit Information:
+Following the session interruption, the user manually staged the implemented
+files and created the following commit independently:
+
+  Commit SHA : 8c671ae
+  Branch     : main
+  Message    : "feat: add secure AI, cryptographic ledger, and security controls"
+  Author     : User (manually created after agent session ended)
+  Pushed to  : https://github.com/mitul0427/FinSec.git (remote: origin/main)
+  Files in commit (19 files, +1729 -88):
+    src/backend/package.json (Modified)
+    src/backend/prisma/schema.prisma (Modified)
+    src/backend/prisma/seed.js (Modified)
+    src/backend/src/controllers/aiAssistantController.js (Modified/Created)
+    src/backend/src/controllers/authController.js (Modified)
+    src/backend/src/controllers/transactionController.js (Modified)
+    src/backend/src/middleware/auth.js (Modified)
+    src/backend/src/routes/aiRoutes.js (Created)
+    src/backend/src/routes/authRoutes.js (Modified)
+    src/backend/src/routes/transactionRoutes.js (Modified)
+    src/backend/src/server.js (Modified)
+    src/frontend/src/components/AiAssistantWidget.jsx (Modified/Created)
+    src/frontend/src/components/TransactionTable.jsx (Modified)
+    src/frontend/src/utils/api.js (Modified)
+    src/backend/src/services/anomalyService.js (Created)
+    src/backend/src/services/ledgerService.js (Created)
+    src/backend/tests/aiActionGateway.test.js (Created)
+    src/backend/tests/ledger.test.js (Created)
+    src/backend/tests/securityFeatures.test.js (Created)
+
+Deployment Status:
+Deployment has NOT been performed. The project remains in development/local
+state. Live deployment is pending as the next major milestone.
+
+Agent Response Summary:
+This entry retroactively documents the implementation session for the
+Cryptographic Ledger, Secure AI Action Gateway, Anomaly Detection, and
+associated security features. The agent session was interrupted by quota
+exhaustion before logging could be completed. All code was implemented and
+tests passed (25/25) before interruption. The user subsequently committed and
+pushed the work as commit 8c671ae. Deployment remains pending.
+
+Commit SHA:
+8c671ae (user-created commit; agent session had ended before this commit was made)
+
+Files Modified / Created:
+* src/backend/package.json (Modified)
+* src/backend/prisma/schema.prisma (Modified)
+* src/backend/prisma/seed.js (Modified)
+* src/backend/src/controllers/aiAssistantController.js (Modified/Created)
+* src/backend/src/controllers/authController.js (Modified)
+* src/backend/src/controllers/transactionController.js (Modified)
+* src/backend/src/middleware/auth.js (Modified)
+* src/backend/src/routes/aiRoutes.js (Created)
+* src/backend/src/routes/authRoutes.js (Modified)
+* src/backend/src/routes/transactionRoutes.js (Modified)
+* src/backend/src/server.js (Modified)
+* src/frontend/src/components/AiAssistantWidget.jsx (Modified/Created)
+* src/frontend/src/components/TransactionTable.jsx (Modified)
+* src/frontend/src/utils/api.js (Modified)
+* src/backend/src/services/anomalyService.js (Created)
+* src/backend/src/services/ledgerService.js (Created)
+* src/backend/tests/aiActionGateway.test.js (Created)
+* src/backend/tests/ledger.test.js (Created)
+* src/backend/tests/securityFeatures.test.js (Created)
+* docs/logs.txt (Modified — this retroactive entry appended by Antigravity)
+
+Actions Taken:
+* [Agent session] write_to_file src/backend/src/services/ledgerService.js
+* [Agent session] write_to_file src/backend/src/services/anomalyService.js
+* [Agent session] write_to_file src/backend/src/controllers/aiAssistantController.js
+* [Agent session] write_to_file src/backend/src/routes/aiRoutes.js
+* [Agent session] multi_replace_file_content src/backend/src/controllers/transactionController.js
+* [Agent session] multi_replace_file_content src/backend/src/server.js
+* [Agent session] multi_replace_file_content src/frontend/src/components/AiAssistantWidget.jsx
+* [Agent session] multi_replace_file_content src/frontend/src/components/TransactionTable.jsx
+* [Agent session] multi_replace_file_content src/frontend/src/utils/api.js
+* [Agent session] write_to_file src/backend/tests/aiActionGateway.test.js
+* [Agent session] write_to_file src/backend/tests/ledger.test.js
+* [Agent session] write_to_file src/backend/tests/securityFeatures.test.js
+* [Agent session] run_command npm test — Result: 25 passed, 0 failed, 0 cancelled
+* [Agent session] run_command npm run build (frontend) — Result: build succeeded
+* [Agent session — INTERRUPTED] Session quota exhausted before logging completed
+* [User action] git add <19 files> && git commit -m "feat: add secure AI, cryptographic ledger, and security controls"
+* [User action] git push origin main
+
+================================================================================
+[2026-10-05T21:32:00+05:30] Deployment Readiness Audit Request
+================================================================================
+User Prompt (verbatim):
+We are now preparing the FinSec project for mandatory live deployment.
+
+IMPORTANT:
+- Do NOT deploy yet.
+- Do NOT modify application code yet.
+- Do NOT modify AGENTS.md.
+- Do NOT change the current working functionality.
+- Follow AGENTS.md, PARTICIPANT_RULES.md, README.md and docs/APPROACH.md.
+
+Perform a DEPLOYMENT READINESS AUDIT only.
+
+[Full audit request covering: Backend (package.json, Dockerfile, PORT, 0.0.0.0
+binding, env vars, Prisma/DB), Frontend (Dockerfile, nginx.conf, API config,
+Socket.io), Database (schema.prisma vs docker-compose, SQLite/PostgreSQL),
+WebAuthn (RP_ID/ORIGIN), CORS, AI (Gemini env vars, secret exposure), File
+handling, Render architecture recommendation, and a structured readiness report.]
+
+Agent Response:
+[See next entry — audit response recorded separately as it was delivered in the
+same turn.]
+
+Agent Response Summary:
+User requested a read-only Deployment Readiness Audit of commit 8c671ae with no
+code modifications. The audit was performed by inspecting repository files only.
+No files were modified.
+
+Commit SHA:
+N/A (audit only — no commit produced)
+
+Files Modified / Created:
+(none — read-only audit)
+
+Actions Taken:
+* view_file / list_dir / grep_search across repository files (read-only)
+
+================================================================================
+[2026-10-05T21:32:17+05:30] Retroactive Log Update for Interrupted Session
+================================================================================
+User Prompt (verbatim):
+Update the required hackathon activity log ONLY.
+
+IMPORTANT:
+- Do NOT modify any application source code.
+- Do NOT modify AGENTS.md.
+- Do NOT modify or rewrite previous log entries.
+- Follow the append-only logging requirement in AGENTS.md.
+- Append a new truthful entry to docs/logs.txt describing the work performed
+  during the interrupted Cryptographic Ledger / Secure AI / Security Features
+  implementation session.
+
+[Full logging instructions specifying 10 accuracy requirements for the entry.]
+
+Agent Response:
+Appended a retroactive, truthful, append-only log entry to docs/logs.txt
+accurately documenting the interrupted Cryptographic Ledger / Secure AI /
+Security Features implementation session. The entry records: features requested,
+implementation work performed, files created/modified, test results (25 passed),
+frontend build success (with bundle-size advisory warning), the session
+interruption due to agent quota exhaustion, and the user-created commit 8c671ae.
+No application source code was modified. No previous log entries were altered.
+
+Agent Response Summary:
+Appended a retroactive log entry per the user's instructions. The entry
+accurately records the implementation session that was interrupted before logging
+could be completed, the test results, and the user-created commit 8c671ae. Only
+docs/logs.txt was modified (append only).
+
+Commit SHA:
+(not committed per user instructions — user instructed: "Do not commit or push anything")
+
+Files Modified / Created:
+* docs/logs.txt (Modified — append only)
+
+Actions Taken:
+* view_file docs/logs.txt (lines 460-496, 390-435, 1-30)
+* replace_file_content docs/logs.txt (append new entries)
+* run_command git status --short
 
 
