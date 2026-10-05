@@ -54,6 +54,9 @@ describe('Auth Registration Role Security', () => {
   });
 
   test('Standard registration defaults to role: "USER"', async () => {
+    // Small delay to respect 5 req/sec gateway rate limit
+    await new Promise((r) => setTimeout(r, 250));
+
     const payload = {
       email: 'standard_user@audit.com',
       password: 'StandardPassword123!',
