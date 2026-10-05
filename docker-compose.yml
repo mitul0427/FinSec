@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: finsec_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: finsec_user
+      POSTGRES_PASSWORD: finsec_secure_password_2026
+      POSTGRES_DB: finsec_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finsec_user -d finsec_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: finsec_backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: "postgresql://finsec_user:finsec_secure_password_2026@postgres:5432/finsec_db?schema=public"
+      JWT_SECRET: "finsec_super_secret_jwt_access_token_key_2026_xyz"
+      JWT_REFRESH_SECRET: "finsec_super_secret_jwt_refresh_token_key_2026_abc"
+      HMAC_SECRET: "finsec_hmac_request_signing_secret_key_2026"
+      RP_ID: "localhost"
+      RP_NAME: "FinSec ZeroTrust"
+      ORIGIN: "http://localhost:3000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    container_name: finsec_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -5,6 +5,8 @@ version: "1.0"
 
 submission:
   team_id: "74"
+  track: "PS-01"
+  project_name: "FinSec ZeroTrust"
   repository: "https://github.com/mitul0427/FinSec.git"
   commit_sha: ""
   deployment_url: ""

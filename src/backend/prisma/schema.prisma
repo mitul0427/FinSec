@@ -1,0 +1,83 @@
+// Prisma Schema for FinSec ZeroTrust (PS-01 FinTrack)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String              @id @default(uuid())
+  email           String              @unique
+  fullName        String?
+  passwordHash    String?
+  role            String              @default("USER") // "USER" | "ADMIN"
+  customGeminiKey String?
+  currentChallenge String?            // Ephemeral WebAuthn challenge
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  transactions    Transaction[]
+  budgets         Budget[]
+  passkeys        PasskeyCredential[]
+  securityLogs    SecurityLog[]
+}
+
+model PasskeyCredential {
+  id          String   @id // Base64URL credential ID
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicKey   String   // Base64 public key
+  counter     BigInt   @default(0)
+  deviceType  String   @default("singleDevice")
+  backedUp    Boolean  @default(false)
+  transports  String?  // JSON stringified array of transports
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "INCOME" | "EXPENSE"
+  category    String   // "Food & Dining", "Housing", "Utilities", "Salary", "Investment", "Healthcare", "Shopping", "Other"
+  amount      Float
+  date        DateTime @default(now())
+  description String
+  merchant    String?
+  receiptUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String
+  limitAmount Float
+  period      String   @default("MONTHLY")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, category])
+}
+
+model SecurityLog {
+  id           String   @id @default(uuid())
+  timestamp    DateTime @default(now())
+  eventType    String   // "HONEYPOT_TRIGGER" | "SQLI_ATTEMPT" | "XSS_DETECTED" | "AUTH_FAILURE" | "PASSKEY_AUTH" | "BLOCKED_IP"
+  severity     String   // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  ipAddress    String
+  endpoint     String
+  payload      String?
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  latitude     Float?
+  longitude    Float?
+  locationName String?
+  actionTaken  String   // "BLOCKED" | "BANNED" | "LOGGED" | "ALERTED"
+}

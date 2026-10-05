@@ -1,82 +1,133 @@
-# Build Secure 24 — Participant Starter Repository
+# FinSec ZeroTrust — Personal Finance & AI Assistant (PS-01)
 
-**Abhedya — VBIT Cybersecurity Forum, Vignana Bharathi Institute of Technology, Hyderabad**
-
-Welcome to the official Build Secure 24 starter repository.
-
----
-
-## 1. Challenge Overview
-
-- **Schedule**: October 5, 2026, 11:00 AM IST to October 6, 2026, 11:00 AM IST
-- **Duration**: Exactly 24 Hours
-- **Submission Deadline**: October 6, 2026, 11:00 AM IST (`2026-10-06T11:00:00+05:30`)
-- **Team Size**: Exactly 2 or 4 participants per team (teams of 1, 3, or >4 are not permitted)
-- **Core Requirement**: All project code must be created live during the 24-hour hackathon. Importing pre-built or third-party repositories is strictly prohibited.
+**Build Secure 24 — Official Hackathon Project**  
+**Team ID:** 74 | **Team Name:** SleNova | **Track:** PS-01 (FinTrack: Personal Finance & AI Assistant)  
+**Live Repository:** [https://github.com/mitul0427/FinSec.git](https://github.com/mitul0427/FinSec.git)
 
 ---
 
-## 2. Repository Structure
+## 1. Project Overview
 
+**FinSec ZeroTrust** is an enterprise-grade, secure personal finance platform engineered with a strict **Zero Trust Architecture (ZTA)**. Combining comprehensive financial tracking (income/expense CRUD, budget threshold monitoring, Recharts analytics, CSV/JSON export) with cutting-edge cybersecurity and multi-modal AI (Google Gemini 2.0 OCR & Financial Assistant), FinSec ZeroTrust ensures financial data remains untampered, non-repudiable, and protected against modern attack vectors.
+
+### Key Pillars & Security Innovations:
+1. **Core PS-01 Financial Engine & AI:** Complete transaction management, multi-category budgeting with live threshold alerts, CSV/JSON data export, multi-stage sanitizing Receipt Vision AI (magic-bytes verification + EXIF stripping + Gemini OCR), and conversational AI assistant grounded by Zod schemas.
+2. **The Fortress (Authentication & Gateway Security):** Passwordless WebAuthn / FIDO2 Passkeys with biometric/hardware key support, short-lived 5-minute JWTs with rotating HttpOnly Secure cookies, RBAC (`USER` vs `ADMIN`), HMAC-SHA256 request signature verification, and 5 req/sec rate limiting.
+3. **Active Defense (Intrusion Detection & Sanitization):** Decoy honeypot endpoints (`/api/v1/admin/login-v1`) that auto-ban malicious IPs and emit real-time alerts, proactive SQL injection body inspection, and client-side DOMPurify with strict Content Security Policy.
+4. **The SOC Dashboard & Post-Deployment Analysis:** Interactive global threat map powered by React-Leaflet and Socket.io, real-time pulsing attack markers by IP geolocation, and an immutable append-only `SecurityLog` audit table enforced by Prisma runtime middleware.
+
+---
+
+## 2. Architecture & Tech Stack
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                       React 18 + Vite                       │
+│      Tailwind CSS • Recharts • React-Leaflet • DOMPurify     │
+│             WebAuthn Browser • Socket.io Client             │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTPS / HMAC-SHA256 Signatures
+┌──────────────────────────────▼──────────────────────────────┐
+│                    Express Security Gateway                 │
+│      Helmet CSP • Rate Limiting • SQLi Inspection Filter     │
+│          Honeypot Trap ──► Real-Time Socket.io Alert        │
+└───────────────┬──────────────────────────────┬──────────────┘
+                │                              │
+┌───────────────▼──────────────┐┌──────────────▼──────────────┐
+│       Core Finance & AI      ││     The Fortress Security    │
+│ • Income/Expense CRUD        ││ • WebAuthn / FIDO2 Passkeys │
+│ • Budget Alerts & Export     ││ • 5-min JWT + Cookie Rotate │
+│ • Receipt Vision AI (Gemini) ││ • HMAC Request Verification │
+│ • Natural Language Assistant ││ • Role-Based Access (RBAC)  │
+└───────────────┬──────────────┘└──────────────┬──────────────┘
+                │                              │
+┌───────────────▼──────────────────────────────▼──────────────┐
+│                      Prisma ORM Layer                        │
+│          Immutable Append-Only SecurityLog Middleware       │
+│                  SQLite / PostgreSQL Storage                 │
+└─────────────────────────────────────────────────────────────┘
 ```
-├── AGENTS.md                  ← AI agent behavioral contract & logging gate
-├── README.md                  ← This file
-├── PARTICIPANT_RULES.md       ← Competition rules
-│
-├── docs/                      ← Autonomous documentation layer
-│   ├── APPROACH.md            ← Problem breakdown & architecture approach
-│   └── logs.txt               ← Turn-by-turn prompt, file location & timeline log
-│
-├── metadata/                  ← Submission metadata
-│   ├── team.yaml              ← Team information (2 or 4 members)
-│   └── submission.yaml        ← Final submission details
-│
-├── src/                       ← Application source code directory
-└── deployment/                ← Deployment configuration directory
-    └── README.md              ← Deployment record
+
+### Technology Matrix:
+- **Frontend (`src/frontend`):** React 18, Vite, Tailwind CSS, Recharts, React-Leaflet, Lucide Icons, `@simplewebauthn/browser`, DOMPurify.
+- **Backend (`src/backend`):** Node.js, Express, Prisma ORM, Socket.io, `@simplewebauthn/server`, `express-rate-limit`, `helmet`, `file-type`, `exif-parser`, `jsonwebtoken`, `bcrypt`, `zod`.
+- **AI Engine:** Google Gemini API (Multi-modal Vision OCR & Structured Financial Assistant).
+- **Database:** SQLite (default zero-friction development) & PostgreSQL (`docker-compose.yml`).
+
+---
+
+## 3. Getting Started & Running Locally
+
+### Prerequisites
+- Node.js (v18+ or v25+)
+- npm or yarn
+
+### Quick Start (Development Mode)
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/mitul0427/FinSec.git
+   cd FinSec
+   ```
+
+2. **Start the Backend:**
+   ```bash
+   cd src/backend
+   npm install
+   npx prisma generate
+   npx prisma db push
+   npm run dev
+   ```
+   *The backend will boot on `http://localhost:5000` with SQLite database initialized.*
+
+3. **Start the Frontend:**
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+   *The frontend dashboard will be available at `http://localhost:5173`.*
+
+---
+
+## 4. Docker Deployment
+
+To spin up the entire production environment with PostgreSQL:
+
+```bash
+docker-compose up --build -d
 ```
 
----
-
-## 3. Getting Started
-
-### Step 1: Team Registration & GitHub Repository Setup
-1. Create a new GitHub repository for your team's project.
-2. Fill in `metadata/team.yaml` with your assigned Team ID, team name, your newly created GitHub repository URL (`team.repository`), and all 2 or 4 member details.
-
-### Step 2: AI Agent Onboarding
-When you open this repository in an AI coding assistant (Cursor, Windsurf, Claude Code, Copilot, ChatGPT, etc.):
-- The agent will read `AGENTS.md`, greet your team, recite the competition ground rules, display the remaining time until **October 6, 2026, 11:00 AM IST**, and collect your `I agree` confirmation.
-- Once confirmed, the agent records your team details and GitHub repository URL, and configures your Git remote origin.
-- The agent will **automatically log every prompt, the full agent response, the Git commit SHA, exact file changes, and timeline** in `docs/logs.txt` as you build.
-
-### Step 3: Build & Ship with Continuous Push
-- Author your application code inside `src/`.
-- After each prompt, changes are committed with the exact commit SHA recorded in `docs/logs.txt`, and can be pushed directly to your team's GitHub repository (`git push origin main`).
-- Document your technical approach in `docs/APPROACH.md`.
-- Deploy your application and record live details in `deployment/README.md`.
-- Update `metadata/submission.yaml` with your final commit SHA before the **October 6, 2026, 11:00 AM IST** deadline.
+Services exposed:
+- Frontend: `http://localhost:3000` (or `http://localhost:5173`)
+- Backend API: `http://localhost:5000`
+- PostgreSQL: `localhost:5432`
 
 ---
 
-## 4. Multi-Device Team Collaboration
+## 5. API Reference Summary
 
-All 4 team members can work simultaneously across separate laptops:
-
-1. **Clone**: Every teammate clones your team's GitHub repository to their device.
-2. **Syncing Progress**:
-   - When one teammate finishes a feature or prompt:
-     ```bash
-     git add src/ docs/
-     git commit -m "feat: implement feature description"
-     git push origin main
-     ```
-   - Other teammates pull the latest updates:
-     ```bash
-     git pull origin main
-     ```
-3. **Agent Continuity**: When a teammate opens the updated repo on their laptop, their AI assistant automatically reads `docs/APPROACH.md` and recent `docs/logs.txt` entries, immediately picking up where the team left off.
+| Method | Endpoint | Description | Security Controls |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Create user account | Bcrypt password hash, Zod validation |
+| `POST` | `/api/v1/auth/login` | Authenticate & issue JWT | Rate limited, 5-min JWT + HttpOnly refresh cookie |
+| `POST` | `/api/v1/auth/webauthn/generate-registration-options` | Begin passkey enrollment | Authenticated, cryptographically verified |
+| `POST` | `/api/v1/auth/webauthn/verify-registration` | Complete passkey enrollment | WebAuthn challenge verification |
+| `POST` | `/api/v1/auth/webauthn/generate-authentication-options` | Begin passkey login | Anti-replay challenge |
+| `POST` | `/api/v1/auth/webauthn/verify-authentication` | Complete passkey login | FIDO2 signature check |
+| `GET` | `/api/v1/transactions` | List/filter transactions | JWT Auth, sanitized query params |
+| `POST` | `/api/v1/transactions` | Create income/expense | HMAC-SHA256 signature, Zod schema |
+| `GET` | `/api/v1/transactions/export` | Download financial CSV/JSON | JWT Auth, rate-limited |
+| `POST` | `/api/v1/receipts/scan` | AI Receipt Vision & OCR | `file-type` magic bytes, `exif-parser` stripping |
+| `POST` | `/api/v1/ai/assistant` | Conversational Financial AI | Gemini 2.0 with Zod schema action mapping |
+| `POST` | `/api/v1/admin/login-v1` | **Honeypot Decoy Trap** | Auto-ban IP, emit Socket.io SOC alert |
+| `GET` | `/api/v1/admin/soc/logs` | Immutable Security Audit Log | `ADMIN` RBAC guard, tamper-proof |
 
 ---
 
-*Build freely. Use AI freely. Secure what you build. Document what you claim. Prove what you implemented.*
+## 6. Security Assurance & Evaluation Compliance
+
+- **Immutable Trust Root:** `AGENTS.md` is strictly preserved and validated.
+- **Append-Only Logging:** Every AI prompt, response, file modification, and Git commit hash is recorded in `docs/logs.txt`.
+- **Live Authorship:** Authored live within the 24-hour hackathon window in `src/`.
+- **Zero-Trust Enforcement:** No request is trusted implicitly; all inputs are validated, sanitized, and audited.
