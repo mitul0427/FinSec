@@ -414,4 +414,82 @@ Actions Taken:
 * run_command Invoke-RestMethod
 * run_command git add / git commit
 
+================================================================================
+[2026-10-05T20:05:00+05:30] Fix HMAC Malformed-Signature RangeError Handling
+================================================================================
+User Prompt (verbatim):
+We have completed the previous security fix successfully.
+
+Now fix ONLY the HMAC malformed-signature handling issue identified in the baseline audit.
+
+IMPORTANT:
+- Follow AGENTS.md, PARTICIPANT_RULES.md, README.md, and docs/APPROACH.md.
+- Do NOT add unrelated features.
+- Do NOT redesign the HMAC system.
+- Do NOT change API endpoint names.
+- Do NOT change the frontend unless absolutely necessary.
+- Preserve the existing valid HMAC behavior.
+- Make the smallest safe change possible.
+- Update docs/logs.txt according to the repository rules.
+
+SECURITY ISSUE:
+In the HMAC verification middleware, crypto.timingSafeEqual() can throw a Node.js RangeError when the supplied signature and expected signature have different byte lengths.
+
+CURRENT BAD BEHAVIOR:
+Malformed/tampered HMAC signature can produce HTTP 500.
+
+DESIRED BEHAVIOR:
+Any missing, malformed, invalid, or mismatched HMAC signature must be rejected cleanly with HTTP 401 Unauthorized (or the existing intended unauthorized response code used by this middleware), without throwing an unhandled exception.
+
+TASK:
+1. Inspect the HMAC verification implementation in:
+   src/backend/src/middleware/security.js
+2. Add a defensive length check before crypto.timingSafeEqual().
+3. Preserve the existing constant-time comparison when lengths match.
+4. Ensure malformed signatures do not crash the request handler.
+5. Preserve the existing timestamp/replay protection.
+6. Add a focused automated test for:
+   - valid HMAC -> allowed
+   - invalid same-length HMAC -> rejected
+   - invalid different-length HMAC -> rejected cleanly, not 500
+7. Run the backend tests.
+8. Perform a live HTTP verification if practical.
+9. Update docs/logs.txt.
+
+Before changing anything, show me:
+- the file(s) to be modified
+- a short explanation
+
+After changing, report:
+- files changed
+- exact security behavior before vs after
+- tests performed
+- test results
+- commit SHA
+
+Agent Response:
+Hardened verifyHmacSignature middleware in src/backend/src/middleware/security.js by introducing a defensive buffer length check prior to crypto.timingSafeEqual. This prevents Node.js from throwing an unhandled ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH RangeError when malformed signatures are submitted, ensuring all invalid or tampered signatures cleanly return HTTP 401 Unauthorized. Constant-time equality checking was preserved for matching lengths, and replay protection remains enforced. Added comprehensive automated test suite in src/backend/tests/hmac.test.js and performed live HTTP validation.
+
+Agent Response Summary:
+Defensively guarded crypto.timingSafeEqual with sigBuffer.length !== expectedBuffer.length comparison in src/backend/src/middleware/security.js. Malformed signatures now reject cleanly with HTTP 401 HMAC_SIGNATURE_INVALID without throwing 500 exceptions. Added 4 automated regression test cases in src/backend/tests/hmac.test.js covering valid HMAC, invalid same-length HMAC, invalid different-length HMAC, and expired replay timestamps.
+
+Commit SHA:
+bb5a3dd
+
+Files Modified / Created:
+* src/backend/src/middleware/security.js (Modified)
+* src/backend/tests/auth.test.js (Modified)
+* src/backend/tests/hmac.test.js (Created)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* view_file src/backend/src/middleware/security.js
+* replace_file_content src/backend/src/middleware/security.js
+* write_to_file src/backend/tests/hmac.test.js
+* replace_file_content src/backend/tests/auth.test.js
+* run_command npm test
+* run_command Invoke-RestMethod
+* run_command git add / git commit
+
+
 
