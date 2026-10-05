@@ -27,7 +27,7 @@ const setRefreshTokenCookie = (res, refreshToken) => {
 // 1. Password Registration
 export const register = async (req, res) => {
   try {
-    const { email, password, fullName, role } = req.body;
+    const { email, password, fullName } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
@@ -38,15 +38,13 @@ export const register = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    // Allow setting role to ADMIN if specified or first user
-    const assignedRole = role === 'ADMIN' ? 'ADMIN' : 'USER';
 
     const user = await prisma.user.create({
       data: {
         email,
         fullName: fullName || email.split('@')[0],
         passwordHash,
-        role: assignedRole
+        role: 'USER' // Strict: all public registrations are assigned USER role
       }
     });
 
