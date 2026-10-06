@@ -1034,7 +1034,7 @@ Agent Response Summary:
 Clarified continuous deployment workflow, explaining that git pushes to main automatically trigger Vercel webhook builds and update the live link in ~20 seconds.
 
 Commit SHA:
-DEPLOY_CONFIRMATION_SHA
+96e51a1
 
 Files Modified / Created:
 * docs/logs.txt (Modified)

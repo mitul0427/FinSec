@@ -8,6 +8,6 @@ submission:
   track: "PS-01"
   project_name: "FinSec ZeroTrust"
   repository: "https://github.com/mitul0427/FinSec.git"
-  commit_sha: "230bf15466eb30abfccf6dd74a2bdebe1934817d"
+  commit_sha: "96e51a1"
   deployment_url: "https://fin-sec.vercel.app"
-  submitted_at: "2026-10-06T14:24:00+05:30"
+  submitted_at: "2026-10-06T14:34:00+05:30"
