@@ -560,3 +560,83 @@ Actions Taken:
 * run_command cmd.exe /c "npm.cmd run build"
 * replace_file_content metadata/submission.yaml
 * append docs/logs.txt
+
+================================================================================
+[2026-10-06T11:38:00+05:30] Role-Based Dashboards, Interactive Action Buttons & Floating AI Chatbot
+================================================================================
+User Prompt (verbatim):
+URGENT SPRINT: 1 Hour to deployment. We need to fix critical frontend functionality and routing immediately. Do not over-engineer the backend right now. Mock the data locally if the API is not ready, so the UI is 100% interactive for the judges.
+
+**TASK 1: ROLE-BASED DASHBOARD (RBAC)**
+- We need two different views based on the user's role.
+- Create a mock login logic: If the user logs in with `admin@finesec.com`, route to `/admin`. If they log in with `user@finesec.com`, route to `/dashboard`.
+- **User View (`/dashboard`):** Shows the finance dashboard (Wallet, Transactions, Receipts, Chatbot, Simulate Bank Sync button).
+- **Admin View (`/admin`):** Shows the SOC Dashboard (Live Threat Map, Immutable Security Logs table, Honeypot triggers).
+
+**TASK 2: FIX ALL DEAD BUTTONS**
+- **Sidebar Navigation:** Every link must use React Router `<Link>` or `useNavigate`. Clicking "Wallet" goes to `/wallet`, "Transactions" goes to `/transactions`, "SOC Threat Map" (Admin only) goes to `/admin`.
+- **Action Buttons:** 
+  - "Simulate Bank Sync" must trigger a local `setTimeout` that opens the Anomaly Modal. (If backend is connected, use that, but fallback to local state for the demo).
+  - "Upload Receipt" must open a file picker. On upload, simulate a 2-second loading spinner, then add a new mock receipt to the list.
+  - Anomaly Modal "Approve" and "Block" buttons must close the modal and show a toast notification (e.g., "Transaction Approved" or "Threat Blocked & Logged").
+
+**TASK 3: RESTORE THE CHATBOT**
+- Add a floating chat button in the bottom right corner of the User Dashboard.
+- When clicked, open a chat window.
+- Mock the AI: If the user types "How much did I spend?", reply with a hardcoded realistic response (e.g., "You have spent ₹12,450 this month. Your highest expense is Shopping at ₹4,500."). Make it look functional.
+
+**TASK 4: ADMIN THREAT MAP VISIBILITY (CRITICAL)**
+- In the `/admin` view, the React-Leaflet map MUST be visible. 
+- If React-Leaflet is failing to render or taking too long, use a static image of a world map as a background, and use absolute positioning to place a pulsing red dot on it to simulate the live threat map.
+- Add a mock "Security Logs" table next to the map showing: `Timestamp | IP Address | Attack Type | Status (Blocked)`.
+
+**EXECUTION DIRECTIVE:** 
+Do not wait for backend APIs to finish. Hardcode mock data in the React state so every button works, the chatbot responds, and the map renders. We can wire the real backend later if time permits. Prioritize UI interactivity over backend perfection. GO.
+
+Agent Response:
+Completed all tasks for 100% interactive judge evaluation:
+1. Implemented Role-Based Access Control (RBAC):
+   - Fast login selector for 'user@finesec.com' routes to '/dashboard' (User View).
+   - Fast login selector for 'admin@finesec.com' routes to '/admin' (Admin SOC View).
+2. Fixed all navigation and action buttons:
+   - Sidebar navigation connects directly with React Router NavLink for Wallet ('/wallet'), Transactions ('/transactions'), SOC Threat Map ('/admin'), Settings, and Logout.
+   - "Simulate Bank Sync" fires instant local setTimeout (700ms) with backend fallback, guaranteeing the Anomaly Modal appears immediately for demo.
+   - "Upload Receipt" opens file picker directly, displays 2s loading spinner, and prepends newly extracted receipt to Receipts list.
+   - Anomaly Modal "Approve" and "Block" buttons close modal and display real-time animated toast notifications ("Transaction Approved" or "Threat Blocked & Honeypot Tripwire Armed").
+3. Restored floating AI chatbot:
+   - Floating action button in bottom right corner of User Dashboard opens FinSec AI Co-pilot window.
+   - Realistic mock response engine replies to queries like "How much did I spend?" with contextual spending breakdowns (₹12,450 spent, highest Shopping ₹4,500).
+4. Admin Threat Map Visibility:
+   - Built AdminSocPage at '/admin' with instant-rendering global threat radar map, pulsing red intrusion vectors (Moscow SQLi, Frankfurt Honeypot, protected Hyderabad core), live attack simulation triggers, and Immutable Security Logs audit table.
+5. Production build verified with Vite (npm run build).
+
+Agent Response Summary:
+Implemented RBAC routing (/dashboard and /admin), wired all interactive buttons with zero latency and toast notifications, added floating AI financial chatbot, created visual global SOC threat map with mock security logs table, and verified production build.
+
+Commit SHA:
+f9207785113901bd73dd290186d536edbd44d112
+
+Files Modified / Created:
+* src/frontend/src/pages/LoginPage.jsx (Modified)
+* src/frontend/src/components/Sidebar.jsx (Modified)
+* src/frontend/src/pages/DashboardPage.jsx (Modified)
+* src/frontend/src/components/ReceiptScannerModal.jsx (Modified)
+* src/frontend/src/components/AnomalyConfirmationModal.jsx (Modified)
+* src/frontend/src/components/FloatingChatbot.jsx (Created)
+* src/frontend/src/pages/AdminSocPage.jsx (Created)
+* src/frontend/src/App.jsx (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* write_to_file src/frontend/src/pages/LoginPage.jsx
+* write_to_file src/frontend/src/components/Sidebar.jsx
+* write_to_file src/frontend/src/pages/AdminSocPage.jsx
+* write_to_file src/frontend/src/components/FloatingChatbot.jsx
+* write_to_file src/frontend/src/components/ReceiptScannerModal.jsx
+* write_to_file src/frontend/src/pages/DashboardPage.jsx
+* write_to_file src/frontend/src/components/AnomalyConfirmationModal.jsx
+* write_to_file src/frontend/src/App.jsx
+* run_command cmd.exe /c "npm.cmd run build"
+* replace_file_content metadata/submission.yaml
+* append docs/logs.txt
