@@ -124,6 +124,8 @@ export const simulateAttack = async (req, res) => {
     const { type = 'SQLI_ATTEMPT', ip = '185.220.101.5' } = req.body;
     const geo = resolveThreatGeo(ip);
 
+    const actionTaken = type === 'HONEYPOT_TRIGGER' ? 'BANNED' : 'BLOCKED';
+
     const log = await prisma.securityLog.create({
       data: {
         eventType: type,
@@ -134,9 +136,13 @@ export const simulateAttack = async (req, res) => {
         latitude: geo.lat,
         longitude: geo.lng,
         locationName: geo.name,
-        actionTaken: 'BLOCKED'
+        actionTaken
       }
     });
+
+    if (type === 'HONEYPOT_TRIGGER') {
+      banIP(ip, 'Controlled security test: simulated adversary probed decoy honeypot', 24 * 60 * 60 * 1000);
+    }
 
     broadcastSecurityAlert({
       id: log.id,
@@ -148,7 +154,8 @@ export const simulateAttack = async (req, res) => {
       lat: geo.lat,
       lng: geo.lng,
       timestamp: new Date().toISOString(),
-      action: 'BLOCKED'
+      action: actionTaken,
+      details: type === 'HONEYPOT_TRIGGER' ? 'Controlled security test: simulated adversary probed decoy honeypot route.' : 'Simulated ingress attack blocked.'
     });
 
     return res.json({ message: 'Simulated attack logged and broadcast to SOC.', log });

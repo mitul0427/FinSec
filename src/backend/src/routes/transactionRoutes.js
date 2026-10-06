@@ -5,7 +5,9 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  exportTransactions
+  exportTransactions,
+  verifyLedger,
+  getTransactionAnomalies
 } from '../controllers/transactionController.js';
 import { requireAuth } from '../middleware/auth.js';
 import { verifyHmacSignature } from '../middleware/security.js';
@@ -17,6 +19,12 @@ const router = Router();
 
 // Apply auth to all transaction endpoints
 router.use(requireAuth);
+
+// Anomaly Detection (GET /api/v1/transactions/anomalies)
+router.get('/anomalies', getTransactionAnomalies);
+
+// Cryptographic Ledger Verification (GET /api/v1/transactions/ledger/verify)
+router.get('/ledger/verify', verifyLedger);
 
 // Data Export (GET /api/v1/transactions/export?format=csv|json)
 router.get('/export', exportTransactions);

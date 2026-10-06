@@ -9,7 +9,10 @@ import {
   CornerDownLeft,
   ChevronDown,
   ChevronUp,
-  Shield
+  Shield,
+  ShieldCheck,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { aiApi } from '../utils/api';
 import { sanitizeText } from '../utils/sanitize';
@@ -60,14 +63,10 @@ export const AiAssistantWidget = ({ onActionExecuted }) => {
           {
             role: 'assistant',
             text: data.reply,
-            actionExecuted: data.actionExecuted,
-            actionData: data.actionData
+            proposal: data.proposal,
+            securityAlert: data.securityAlert
           }
         ]);
-
-        if (data.actionExecuted && onActionExecuted) {
-          onActionExecuted();
-        }
       } else {
         setMessages((prev) => [
           ...prev,
@@ -88,6 +87,36 @@ export const AiAssistantWidget = ({ onActionExecuted }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirmProposal = async (msgIndex, proposal) => {
+    setConfirming(true);
+    try {
+      const res = await aiApi.confirmAction(proposal);
+      const data = await res.json();
+      if (res.ok) {
+        setMessages((prev) =>
+          prev.map((m, idx) =>
+            idx === msgIndex ? { ...m, proposalConfirmed: true, confirmedDetails: data } : m
+          )
+        );
+        if (onActionExecuted) onActionExecuted();
+      } else {
+        alert(data.error || 'Action confirmation failed.');
+      }
+    } catch (e) {
+      alert('Network error confirming action.');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleCancelProposal = (msgIndex) => {
+    setMessages((prev) =>
+      prev.map((m, idx) => (idx === msgIndex ? { ...m, proposalCancelled: true } : m))
+    );
   };
 
   const toggleVoiceInput = () => {
@@ -185,11 +214,107 @@ export const AiAssistantWidget = ({ onActionExecuted }) => {
                 className="leading-relaxed"
               />
 
-              {/* Action Executed Badge */}
-              {m.actionExecuted && (
-                <div className="mt-2 pt-2 border-t border-slate-700/60 flex items-center text-[10px] text-emerald-400 font-mono">
-                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-400" />
-                  <span>Database Mutation Committed & Verified</span>
+              {/* Security Alert Badge */}
+              {m.securityAlert && (
+                <div className="mt-2.5 p-2 rounded-xl bg-rose-950/80 border border-rose-800/80 flex items-center text-[11px] text-rose-300 font-mono">
+                  <AlertTriangle className="w-4 h-4 mr-1.5 text-rose-400 shrink-0" />
+                  <span>Adversarial Prompt Injection Blocked & Logged to SOC</span>
+                </div>
+              )}
+
+              {/* Proposed Action Card (Requires User Confirmation) */}
+              {m.proposal && !m.proposalConfirmed && !m.proposalCancelled && (
+                <div className="mt-3 p-3 rounded-xl bg-slate-950/90 border border-cyan-500/40 text-xs space-y-2.5">
+                  <div className="flex items-center space-x-1.5 text-cyan-400 font-bold uppercase tracking-wider text-[10px]">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Action Proposal (Requires Confirmation)</span>
+                  </div>
+
+                  {m.proposal.type === 'CREATE_TRANSACTION' && (
+                    <div className="font-mono text-slate-300 text-[11px] bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Operation:</span>
+                        <span className="text-cyan-300 font-semibold">RECORD_TRANSACTION</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Type:</span>
+                        <span className={m.proposal.transaction?.type === 'INCOME' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                          {m.proposal.transaction?.type}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Amount:</span>
+                        <span className="text-white font-bold">₹{m.proposal.transaction?.amount?.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Category:</span>
+                        <span className="text-slate-200">{m.proposal.transaction?.category}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Description:</span>
+                        <span className="text-slate-200">{m.proposal.transaction?.description}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {m.proposal.type === 'SET_BUDGET' && (
+                    <div className="font-mono text-slate-300 text-[11px] bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Operation:</span>
+                        <span className="text-cyan-300 font-semibold">SET_BUDGET</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Category:</span>
+                        <span className="text-slate-200">{m.proposal.budget?.category}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Limit:</span>
+                        <span className="text-white font-bold">₹{m.proposal.budget?.limitAmount?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-2 pt-1">
+                    <button
+                      onClick={() => handleConfirmProposal(idx, m.proposal)}
+                      disabled={confirming}
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-[11px] flex items-center justify-center space-x-1 shadow-md transition-all"
+                    >
+                      {confirming ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" />
+                          <span>Chaining...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                          <span>Confirm & Sign to Ledger</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleCancelProposal(idx)}
+                      disabled={confirming}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Proposal Confirmed */}
+              {m.proposalConfirmed && (
+                <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center text-[10px] text-emerald-400 font-mono">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-400 shrink-0" />
+                  <span>Action Confirmed & Cryptographically Chained to SHA-256 Ledger</span>
+                </div>
+              )}
+
+              {/* Proposal Cancelled */}
+              {m.proposalCancelled && (
+                <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center text-[10px] text-slate-500 font-mono">
+                  <span>Action Cancelled by User (Zero Trust Guard)</span>
                 </div>
               )}
             </div>

@@ -42,6 +42,9 @@ export const ReceiptScanner = ({ onTransactionCreated }) => {
     try {
       const res = await receiptApi.scan(formData);
       const data = await res.json();
+      if (data.securityChecks) {
+        setResult(data);
+      }
       if (!res.ok) throw new Error(data.message || data.error || 'Failed to scan receipt');
       setResult(data);
     } catch (err) {
@@ -83,7 +86,7 @@ export const ReceiptScanner = ({ onTransactionCreated }) => {
           <h3 className="text-base font-bold text-slate-100">Multi-Stage Sanitizing Receipt Vision AI</h3>
         </div>
         <p className="text-xs text-slate-400 mt-1">
-          Zero-leak image ingestion: Magic byte verification, EXIF GPS data scrubbing, and Gemini 2.0 multi-modal extraction.
+          Zero-leak image ingestion: Magic byte verification, EXIF GPS data scrubbing, and Gemini multi-modal extraction.
         </p>
       </div>
 
@@ -162,6 +165,10 @@ export const ReceiptScanner = ({ onTransactionCreated }) => {
                 {result?.securityChecks?.exifMetadataScrubbed ? (
                   <span className="text-emerald-400 font-mono font-medium flex items-center">
                     <CheckCircle className="w-3.5 h-3.5 mr-1" /> SCRUBBED
+                  </span>
+                ) : result?.securityChecks?.magicBytesVerified ? (
+                  <span className="text-slate-400 font-mono font-medium flex items-center">
+                    CLEAN (NO EXIF)
                   </span>
                 ) : (
                   <span className="text-slate-500 font-mono">PENDING</span>

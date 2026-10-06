@@ -27,7 +27,7 @@ const setRefreshTokenCookie = (res, refreshToken) => {
 // 1. Password Registration
 export const register = async (req, res) => {
   try {
-    const { email, password, fullName, role } = req.body;
+    const { email, password, fullName } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
@@ -38,15 +38,13 @@ export const register = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    // Allow setting role to ADMIN if specified or first user
-    const assignedRole = role === 'ADMIN' ? 'ADMIN' : 'USER';
 
     const user = await prisma.user.create({
       data: {
         email,
         fullName: fullName || email.split('@')[0],
         passwordHash,
-        role: assignedRole
+        role: 'USER' // Strict: all public registrations are assigned USER role
       }
     });
 
@@ -386,5 +384,89 @@ export const verifyPasskeyAuthentication = async (req, res) => {
   } catch (err) {
     console.error('Passkey authentication verification error:', err);
     return res.status(400).json({ error: 'Passkey verification failed.', details: err.message });
+  }
+};
+
+// 7. Security Center Status (Real, User-Specific Security Telemetry)
+export const getSecurityCenterStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [passkeys, securityLogs] = await Promise.all([
+      prisma.passkeyCredential.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          deviceType: true,
+          backedUp: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
+      prisma.securityLog.findMany({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+        take: 10
+      })
+    ]);
+
+    const issuedAt = req.tokenPayload?.iat ? new Date(req.tokenPayload.iat * 1000).toISOString() : null;
+    const expiresAt = req.tokenPayload?.exp ? new Date(req.tokenPayload.exp * 1000).toISOString() : null;
+
+    return res.json({
+      authStatus: 'AUTHENTICATED',
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        fullName: req.user.fullName,
+        role: req.user.role,
+        createdAt: req.user.createdAt
+      },
+      session: {
+        role: req.user.role,
+        tokenIssuedAt: issuedAt,
+        tokenExpiresAt: expiresAt,
+        sessionType: 'Ephemeral Access Token (5m) + HttpOnly Rotation'
+      },
+      passkeys: {
+        isConfigured: passkeys.length > 0,
+        registeredCount: passkeys.length,
+        devices: passkeys
+      },
+      recentSecurityEvents: securityLogs
+    });
+  } catch (err) {
+    console.error('getSecurityCenterStatus error:', err);
+    return res.status(500).json({ error: 'Failed to retrieve security center telemetry.' });
+  }
+};
+
+// 8. Sign Out All Sessions
+export const logoutAllSessions = async (req, res) => {
+  try {
+    res.clearCookie('finsec_refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    await prisma.securityLog.create({
+      data: {
+        eventType: 'LOGOUT_ALL_SESSIONS',
+        severity: 'LOW',
+        ipAddress: req.ip || '127.0.0.1',
+        endpoint: '/api/v1/auth/logout-all',
+        userId: req.user.id,
+        actionTaken: 'LOGGED'
+      }
+    });
+
+    return res.json({
+      message: 'All active sessions have been securely terminated.',
+      code: 'ALL_SESSIONS_REVOKED'
+    });
+  } catch (err) {
+    console.error('logoutAllSessions error:', err);
+    return res.status(500).json({ error: 'Failed to revoke sessions.' });
   }
 };

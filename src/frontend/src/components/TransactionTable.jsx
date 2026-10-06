@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -11,7 +11,11 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   ShieldCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Link2,
+  AlertTriangle,
+  RefreshCw,
+  Lock
 } from 'lucide-react';
 import { sanitizePlain } from '../utils/sanitize';
 import { transactionApi } from '../utils/api';
@@ -38,6 +42,27 @@ export const TransactionTable = ({
   onOpenAddModal
 }) => {
   const [exporting, setExporting] = useState(false);
+  const [ledgerStatus, setLedgerStatus] = useState(null);
+  const [verifyingLedger, setVerifyingLedger] = useState(false);
+
+  const fetchLedgerVerification = async () => {
+    setVerifyingLedger(true);
+    try {
+      const res = await transactionApi.verifyLedger();
+      if (res.ok) {
+        const data = await res.json();
+        setLedgerStatus(data);
+      }
+    } catch (e) {
+      console.error('Ledger verification error:', e);
+    } finally {
+      setVerifyingLedger(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLedgerVerification();
+  }, [transactions]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to securely delete this transaction?')) return;
@@ -86,9 +111,12 @@ export const TransactionTable = ({
             <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center">
               <ShieldCheck className="w-3 h-3 mr-1 inline" /> HMAC Protected
             </span>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/50 flex items-center">
+              <Link2 className="w-3 h-3 mr-1 inline" /> SHA-256 Chained
+            </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Immutable transaction records signed with SHA-256 integrity tokens
+            Tamper-evident transaction ledger chained with SHA-256 cryptographic hashes
           </p>
         </div>
 
@@ -122,6 +150,57 @@ export const TransactionTable = ({
             <span>Add Record</span>
           </button>
         </div>
+      </div>
+
+      {/* Cryptographic Ledger Integrity Status Banner */}
+      <div className="bg-slate-950/60 p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <Lock className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="font-semibold text-slate-200">Ledger Integrity:</span>
+              {verifyingLedger ? (
+                <span className="text-[11px] font-mono text-cyan-400 flex items-center">
+                  <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Verifying chain...
+                </span>
+              ) : ledgerStatus?.valid ? (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/80 flex items-center">
+                  <ShieldCheck className="w-3 h-3 mr-1 text-emerald-400" /> VERIFIED (Tamper-Free)
+                </span>
+              ) : ledgerStatus && !ledgerStatus.valid ? (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800/80 flex items-center">
+                  <AlertTriangle className="w-3 h-3 mr-1 text-rose-400" /> TAMPER DETECTED
+                </span>
+              ) : (
+                <span className="text-slate-400 font-mono text-[11px]">Unverified</span>
+              )}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
+              {ledgerStatus?.valid ? (
+                <span>
+                  Checked <span className="text-emerald-400 font-semibold">{ledgerStatus.checkedTransactions}</span> blocks • Head Hash: <code className="text-cyan-300">{ledgerStatus.headHash ? ledgerStatus.headHash.slice(0, 16) + '...' : 'Genesis'}</code>
+                </span>
+              ) : ledgerStatus && !ledgerStatus.valid ? (
+                <span className="text-rose-300">
+                  Violation at block <code className="text-rose-400">{ledgerStatus.brokenAt}</code> ({ledgerStatus.reason})
+                </span>
+              ) : (
+                <span>Click Verify to compute read-only SHA-256 chain integrity</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={fetchLedgerVerification}
+          disabled={verifyingLedger}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition-all self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${verifyingLedger ? 'animate-spin' : ''}`} />
+          <span>Verify Ledger</span>
+        </button>
       </div>
 
       {/* Filter Bar */}

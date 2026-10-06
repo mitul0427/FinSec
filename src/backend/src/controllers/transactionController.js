@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js';
 import { z } from 'zod';
+import { getNextLedgerBlock, verifyUserLedger } from '../services/ledgerService.js';
+import { detectTransactionAnomalies } from '../services/anomalyService.js';
 
 const transactionSchema = z.object({
   type: z.enum(['INCOME', 'EXPENSE']),
@@ -106,7 +108,7 @@ export const getSummary = async (req, res) => {
   }
 };
 
-// 3. Create Transaction
+// 3. Create Transaction (Cryptographically Chained)
 export const createTransaction = async (req, res) => {
   try {
     const parsed = transactionSchema.safeParse(req.body);
@@ -115,17 +117,33 @@ export const createTransaction = async (req, res) => {
     }
 
     const { type, category, amount, date, description, merchant } = parsed.data;
+    const txDate = date ? new Date(date) : new Date();
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId: req.user.id,
+    const transaction = await prisma.$transaction(async (tx) => {
+      // Compute cryptographic chaining metadata atomically to prevent race conditions
+      const ledgerBlock = await getNextLedgerBlock(tx, req.user.id, {
         type,
         category,
         amount,
-        date: date ? new Date(date) : new Date(),
+        date: txDate,
         description,
         merchant: merchant || null
-      }
+      });
+
+      return await tx.transaction.create({
+        data: {
+          userId: req.user.id,
+          type,
+          category,
+          amount,
+          date: txDate,
+          description,
+          merchant: merchant || null,
+          ledgerIndex: ledgerBlock.ledgerIndex,
+          previousHash: ledgerBlock.previousHash,
+          transactionHash: ledgerBlock.transactionHash
+        }
+      });
     });
 
     return res.status(201).json({ message: 'Transaction recorded.', transaction });
@@ -150,6 +168,14 @@ export const updateTransaction = async (req, res) => {
 
     if (!existing) {
       return res.status(404).json({ error: 'Transaction not found or access denied.' });
+    }
+
+    // Ledger Immutability Rule: Direct historical mutation prohibited
+    if (existing.ledgerIndex != null) {
+      return res.status(409).json({
+        error: 'Cryptographic ledger immutability violation: historical chained records cannot be directly edited. Please post a compensating/correction transaction.',
+        code: 'LEDGER_RECORD_IMMUTABLE'
+      });
     }
 
     const data = { ...parsed.data };
@@ -181,6 +207,14 @@ export const deleteTransaction = async (req, res) => {
       return res.status(404).json({ error: 'Transaction not found or access denied.' });
     }
 
+    // Ledger Immutability Rule: Deletion of cryptographically chained records prohibited
+    if (existing.ledgerIndex != null) {
+      return res.status(409).json({
+        error: 'Cryptographic ledger immutability violation: historical chained records cannot be deleted. Please record an offsetting reversal transaction.',
+        code: 'LEDGER_RECORD_IMMUTABLE'
+      });
+    }
+
     await prisma.transaction.delete({ where: { id } });
     return res.json({ message: 'Transaction deleted successfully.' });
   } catch (err) {
@@ -195,6 +229,14 @@ export const exportTransactions = async (req, res) => {
     const userId = req.user.id;
     const format = (req.query.format || 'csv').toLowerCase();
 
+    // 1. Strict format validation
+    if (!['csv', 'json'].includes(format)) {
+      return res.status(400).json({
+        error: 'Invalid export format. Supported formats: "csv", "json".',
+        code: 'INVALID_EXPORT_FORMAT'
+      });
+    }
+
     const transactions = await prisma.transaction.findMany({
       where: { userId },
       orderBy: { date: 'desc' }
@@ -202,22 +244,46 @@ export const exportTransactions = async (req, res) => {
 
     const timestamp = new Date().toISOString().split('T')[0];
 
+    // 2. Audit log data export event to immutable log
+    await prisma.securityLog.create({
+      data: {
+        eventType: 'DATA_EXPORT',
+        severity: 'LOW',
+        ipAddress: req.ip || '127.0.0.1',
+        endpoint: '/api/v1/transactions/export',
+        payload: JSON.stringify({ format, recordCount: transactions.length }),
+        userId: req.user.id,
+        actionTaken: 'LOGGED'
+      }
+    });
+
     if (format === 'json') {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="fintrack_transactions_${timestamp}.json"`);
       return res.send(JSON.stringify(transactions, null, 2));
     }
 
-    // Default: CSV format
-    const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Description', 'Merchant'];
+    // 3. Safe CSV generation with OWASP Formula Injection Defense
+    // Mitigates CSV Injection (DDE) by neutralizing leading =, +, -, @ characters
+    const sanitizeCsvField = (val) => {
+      let str = String(val == null ? '' : val);
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = "'" + str;
+      }
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Description', 'Merchant', 'LedgerIndex', 'TransactionHash'];
     const rows = transactions.map((t) => [
-      t.id,
-      t.date.toISOString(),
-      t.type,
-      `"${t.category.replace(/"/g, '""')}"`,
+      sanitizeCsvField(t.id),
+      sanitizeCsvField(t.date.toISOString()),
+      sanitizeCsvField(t.type),
+      sanitizeCsvField(t.category),
       t.amount.toFixed(2),
-      `"${t.description.replace(/"/g, '""')}"`,
-      `"${(t.merchant || '').replace(/"/g, '""')}"`
+      sanitizeCsvField(t.description),
+      sanitizeCsvField(t.merchant || ''),
+      sanitizeCsvField(t.ledgerIndex || 'Unchained'),
+      sanitizeCsvField(t.transactionHash || '')
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -228,5 +294,33 @@ export const exportTransactions = async (req, res) => {
   } catch (err) {
     console.error('exportTransactions error:', err);
     return res.status(500).json({ error: 'Export failed.' });
+  }
+};
+
+// 7. Verify Cryptographic Ledger Integrity (Read-Only)
+export const verifyLedger = async (req, res) => {
+  try {
+    const result = await verifyUserLedger(prisma, req.user.id);
+    return res.json(result);
+  } catch (err) {
+    console.error('verifyLedger error:', err);
+    return res.status(500).json({
+      error: 'Failed to verify ledger integrity.',
+      details: err.message
+    });
+  }
+};
+
+// 8. Financial Spending Anomaly Detection (Explainable Rules)
+export const getTransactionAnomalies = async (req, res) => {
+  try {
+    const result = await detectTransactionAnomalies(prisma, req.user.id);
+    return res.json(result);
+  } catch (err) {
+    console.error('getTransactionAnomalies error:', err);
+    return res.status(500).json({
+      error: 'Failed to detect spending anomalies.',
+      details: err.message
+    });
   }
 };

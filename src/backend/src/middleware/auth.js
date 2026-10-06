@@ -55,6 +55,7 @@ export const requireAuth = async (req, res, next) => {
     }
 
     req.user = user;
+    req.tokenPayload = decoded;
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {

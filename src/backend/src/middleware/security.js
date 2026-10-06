@@ -160,7 +160,11 @@ export const verifyHmacSignature = (req, res, next) => {
       const payload = `${timestamp}.${JSON.stringify(req.body || {})}`;
       const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
-      if (crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature)) === false) {
+      const sigBuffer = Buffer.from(typeof signature === 'string' ? signature : '');
+      const expectedBuffer = Buffer.from(expectedSignature);
+
+      // Defensive length check before timingSafeEqual to prevent Node.js RangeError on unequal lengths
+      if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
         return res.status(401).json({
           error: 'HMAC_SIGNATURE_INVALID',
           message: 'Data tampering detected! HMAC-SHA256 signature does not match.'

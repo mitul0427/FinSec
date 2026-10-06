@@ -17,6 +17,10 @@ const sampleGeoLocations = [
 
 export const isIPBanned = (ip) => {
   const cleanIp = ip?.replace('::ffff:', '') || '127.0.0.1';
+  // Loopback / localhost addresses are never banned
+  if (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost') {
+    return false;
+  }
   if (bannedIPs.has(cleanIp)) {
     const banInfo = bannedIPs.get(cleanIp);
     if (Date.now() > banInfo.expiresAt) {
@@ -30,11 +34,20 @@ export const isIPBanned = (ip) => {
 
 export const banIP = (ip, reason, durationMs = 24 * 60 * 60 * 1000) => {
   const cleanIp = ip?.replace('::ffff:', '') || '127.0.0.1';
+  // Never ban loopback / localhost addresses
+  if (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost') {
+    return;
+  }
   bannedIPs.set(cleanIp, {
     reason,
     bannedAt: new Date().toISOString(),
     expiresAt: Date.now() + durationMs
   });
+};
+
+export const unbanIP = (ip) => {
+  const cleanIp = ip?.replace('::ffff:', '') || '127.0.0.1';
+  return bannedIPs.delete(cleanIp);
 };
 
 export const getBannedIPsList = () => {

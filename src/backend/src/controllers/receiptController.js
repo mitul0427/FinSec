@@ -1,7 +1,40 @@
 import { fileTypeFromBuffer } from 'file-type';
-import ExifParser from 'exif-parser';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../config/prisma.js';
+import { sanitizeImageMetadata } from '../services/imageSanitizer.js';
+
+export const SUPPORTED_CATEGORIES = [
+  'Food & Dining',
+  'Housing',
+  'Utilities',
+  'Shopping',
+  'Travel',
+  'Healthcare',
+  'Salary',
+  'Investment',
+  'Entertainment',
+  'Other'
+];
+
+export function normalizeCategory(raw) {
+  if (!raw || typeof raw !== 'string') return 'Shopping';
+  const trimmed = raw.trim();
+  const exact = SUPPORTED_CATEGORIES.find((c) => c.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact;
+
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('food') || lower.includes('dine') || lower.includes('dining') || lower.includes('restaurant') || lower.includes('cafe') || lower.includes('grocery') || lower.includes('coffee') || lower.includes('bakery') || lower.includes('meal')) return 'Food & Dining';
+  if (lower.includes('util') || lower.includes('electric') || lower.includes('water') || lower.includes('power') || lower.includes('internet') || lower.includes('wifi') || lower.includes('phone') || lower.includes('gas bill')) return 'Utilities';
+  if (lower.includes('travel') || lower.includes('flight') || lower.includes('uber') || lower.includes('lyft') || lower.includes('taxi') || lower.includes('cab') || lower.includes('transport') || lower.includes('transit') || lower.includes('hotel') || lower.includes('gas') || lower.includes('fuel') || lower.includes('airline')) return 'Travel';
+  if (lower.includes('health') || lower.includes('pharma') || lower.includes('doctor') || lower.includes('hospital') || lower.includes('clinic') || lower.includes('dental') || lower.includes('medicine') || lower.includes('drug')) return 'Healthcare';
+  if (lower.includes('house') || lower.includes('rent') || lower.includes('mortgage') || lower.includes('property') || lower.includes('apartment')) return 'Housing';
+  if (lower.includes('entertain') || lower.includes('movie') || lower.includes('cinema') || lower.includes('theater') || lower.includes('game') || lower.includes('concert') || lower.includes('ticket') || lower.includes('music')) return 'Entertainment';
+  if (lower.includes('shop') || lower.includes('store') || lower.includes('retail') || lower.includes('market') || lower.includes('cloth') || lower.includes('apparel') || lower.includes('electronic') || lower.includes('mall')) return 'Shopping';
+  if (lower.includes('salary') || lower.includes('paycheck') || lower.includes('wage') || lower.includes('income')) return 'Salary';
+  if (lower.includes('invest') || lower.includes('stock') || lower.includes('fund') || lower.includes('crypto')) return 'Investment';
+
+  return 'Other';
+}
 
 export const scanReceipt = async (req, res) => {
   try {
@@ -23,20 +56,7 @@ export const scanReceipt = async (req, res) => {
     }
 
     // Step 2: Strip EXIF metadata to protect user privacy (GPS coordinates, device ID)
-    let sanitizedBuffer = buffer;
-    let exifStripped = false;
-    try {
-      if (type.mime === 'image/jpeg') {
-        const parser = ExifParser.create(buffer);
-        const result = parser.parse();
-        if (result && result.tags) {
-          exifStripped = true;
-          // In JPEG, we can construct sanitized buffer or acknowledge EXIF scrubbed
-        }
-      }
-    } catch (e) {
-      // Non-fatal if no EXIF block
-    }
+    const { sanitizedBuffer, exifStripped } = sanitizeImageMetadata(buffer, type.mime);
 
     // Step 3: Determine Gemini API Key (User custom key or server environment key)
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -88,7 +108,7 @@ export const scanReceipt = async (req, res) => {
       securityChecks: {
         magicBytesVerified: true,
         detectedMime: type.mime,
-        exifMetadataScrubbed: true
+        exifMetadataScrubbed: exifStripped
       },
       receipt: extractedData
     });

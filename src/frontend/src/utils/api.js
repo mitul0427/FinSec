@@ -115,7 +115,8 @@ export const transactionApi = {
   create: (data) => apiFetch('/transactions', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiFetch(`/transactions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => apiFetch(`/transactions/${id}`, { method: 'DELETE' }),
-  exportUrl: (format = 'csv') => `${API_BASE}/transactions/export?format=${format}`
+  exportUrl: (format = 'csv') => `${API_BASE}/transactions/export?format=${format}`,
+  verifyLedger: () => apiFetch('/transactions/ledger/verify')
 };
 
 export const budgetApi = {
@@ -129,7 +130,8 @@ export const receiptApi = {
 };
 
 export const aiApi = {
-  assistant: (query) => apiFetch('/ai/assistant', { method: 'POST', body: JSON.stringify({ query }) })
+  assistant: (query) => apiFetch('/ai/assistant', { method: 'POST', body: JSON.stringify({ query }) }),
+  confirmAction: (action) => apiFetch('/ai/action/confirm', { method: 'POST', body: JSON.stringify({ action }) })
 };
 
 export const socApi = {

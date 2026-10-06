@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { computeTransactionHash, GENESIS_PREVIOUS_HASH } from '../src/services/ledgerService.js';
 
 const prisma = new PrismaClient();
 
@@ -32,7 +33,7 @@ async function main() {
     }
   });
 
-  // 3. Create Sample Transactions for Demo User
+  // 3. Create Sample Transactions for Demo User (Cryptographically Chained)
   const sampleTransactions = [
     { type: 'INCOME', category: 'Salary', amount: 5200.00, description: 'Monthly Engineering Payroll', merchant: 'TechCorp Global', date: new Date('2026-10-01T09:00:00Z') },
     { type: 'INCOME', category: 'Investment', amount: 340.50, description: 'Quarterly Dividend Payout', merchant: 'Vanguard Index', date: new Date('2026-10-02T14:30:00Z') },
@@ -43,13 +44,33 @@ async function main() {
     { type: 'EXPENSE', category: 'Travel', amount: 62.40, description: 'Airport Express Rail Pass', merchant: 'Transit Authority', date: new Date('2026-10-05T10:00:00Z') }
   ];
 
+  let prevHash = GENESIS_PREVIOUS_HASH;
+  let ledgerIdx = 1;
   for (const t of sampleTransactions) {
+    const hash = computeTransactionHash({
+      ledgerIndex: ledgerIdx,
+      previousHash: prevHash,
+      userId: demoUser.id,
+      type: t.type,
+      category: t.category,
+      amount: t.amount,
+      date: t.date,
+      description: t.description,
+      merchant: t.merchant
+    });
+
     await prisma.transaction.create({
       data: {
         userId: demoUser.id,
-        ...t
+        ...t,
+        ledgerIndex: ledgerIdx,
+        previousHash: prevHash,
+        transactionHash: hash
       }
     });
+
+    prevHash = hash;
+    ledgerIdx++;
   }
 
   // 4. Create Budgets with Realistic Spending
