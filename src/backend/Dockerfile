@@ -5,11 +5,11 @@ RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
+# Copy package manifests AND Prisma schema before npm install so postinstall succeeds
 COPY package*.json ./
-RUN npm install
-
 COPY prisma ./prisma/
-RUN npx prisma generate
+
+RUN npm install
 
 COPY . .
 
