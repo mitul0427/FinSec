@@ -109,18 +109,18 @@ export const SocThreatMap = () => {
     }
   };
 
-  // Trigger Decoy Honeypot (POST /api/v1/admin/login-v1)
+  // Trigger Controlled Honeypot Security Test (Simulated Adversary Telemetry)
   const handleTriggerHoneypot = async () => {
     setSimulating(true);
     try {
-      await socApi.triggerHoneypot({
-        username: 'admin',
-        password: 'password123',
-        exploitAttempt: 'nmap -sV -p 80,443,5000'
+      const simulatedAdversaryIp = `${Math.floor(Math.random() * 150 + 50)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+      await socApi.simulateAttack({
+        type: 'HONEYPOT_TRIGGER',
+        ip: simulatedAdversaryIp
       });
       fetchSocData();
     } catch (e) {
-      console.warn(e);
+      console.warn('Honeypot test simulation error:', e);
     } finally {
       setSimulating(false);
     }
@@ -237,9 +237,10 @@ export const SocThreatMap = () => {
               onClick={handleTriggerHoneypot}
               disabled={simulating}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-red-950/80 hover:bg-red-900/80 border border-red-700 text-xs text-red-300 font-mono transition-all"
+              title="Execute a controlled honeypot penetration test using simulated adversary telemetry"
             >
               <Flame className="w-3.5 h-3.5 text-red-400" />
-              <span>Probe Decoy Honeypot</span>
+              <span>Probe Decoy Honeypot (Security Test)</span>
             </button>
 
             <button
@@ -260,10 +261,11 @@ export const SocThreatMap = () => {
             scrollWheelZoom={false}
             style={{ height: '100%', width: '100%' }}
           >
-            {/* High-Contrast CartoDB Dark Matter Tiles */}
+            {/* OpenStreetMap Standard Tiles with Dark Radar Filter - No API Key Required */}
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url={import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+              className="soc-dark-tiles"
             />
 
             {threatEvents
