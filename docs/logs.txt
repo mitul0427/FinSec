@@ -1042,3 +1042,56 @@ Actions Taken:
 * append docs/logs.txt
 * run_command git commit
 * run_command git push origin main
+
+================================================================================
+[2026-10-06T13:49:00+05:30] Fix Vercel Multi-Project Backend Deployment Configuration
+================================================================================
+User Prompt (verbatim):
+13:48:10.813 Running build in Washington, D.C., USA (East) – iad1
+13:48:10.814 Build machine configuration: 2 cores, 8 GB
+13:48:10.968 Cloning github.com/mitul0427/FinSec (Branch: main, Commit: 87c4d6a)
+13:48:10.970 Previous build caches not available.
+13:48:12.311 Cloning completed: 1.343s
+13:48:12.986 Running "vercel build"
+13:48:13.033 Vercel CLI 62.1.0
+13:48:14.852 Installing dependencies...
+13:48:24.760 
+13:48:24.761 > finsec-backend@1.0.0 postinstall
+13:48:24.761 > prisma generate
+13:48:25.886 ✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 64ms
+13:48:25.923 added 252 packages in 11s
+13:48:25.975 sh: line 1: cd: src/frontend: No such file or directory
+13:48:25.979 Error: Command "cd src/frontend && npm install && npm run build" exited with 1
+
+Agent Response:
+Diagnosed and resolved the root cause of the "cd: src/frontend: No such file or directory" error during the Vercel backend build:
+
+1. Root Cause:
+   - When deploying the backend as a single project with Root Directory set to `src/backend`, Vercel operates inside `/var/task` (which is `src/backend`).
+   - Because `src/backend` did not have its own `vercel.json`, Vercel inherited root `vercel.json` which specified `buildCommand: "cd src/frontend && npm install && npm run build"`.
+   - Running that command inside `src/backend` failed because `src/frontend` does not exist relative to `src/backend`.
+
+2. Fix Applied:
+   - Created dedicated `src/backend/vercel.json` using `@vercel/node` builder and routing all requests to `src/server.js`.
+   - Updated root `vercel.json` to conditionally inspect directory existence with Node.js before attempting `cd src/frontend`.
+   - Note: The previous Prisma build issue is confirmed completely fixed, as shown by `✔ Generated Prisma Client (v6.19.3) in 64ms` in the build logs.
+
+Agent Response Summary:
+Created src/backend/vercel.json with @vercel/node serverless build specification and made root vercel.json buildCommand conditional, preventing command inheritance collisions across backend and frontend projects.
+
+Commit SHA:
+553f5fa1312ed16dae49c534e67d56a5bf77a097
+
+Files Modified / Created:
+* src/backend/vercel.json (Created)
+* vercel.json (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* write_to_file src/backend/vercel.json
+* write_to_file vercel.json
+* replace_file_content metadata/submission.yaml
+* append docs/logs.txt
+* run_command git commit
+* run_command git push origin main
