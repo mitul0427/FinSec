@@ -479,3 +479,84 @@ Actions Taken:
 * run_command cmd.exe /c "npm.cmd run dev" (backend)
 * run_command cmd.exe /c "npm.cmd run dev" (frontend)
 * replace_file_content docs/logs.txt
+
+================================================================================
+[2026-10-06T11:24:00+05:30] Full UI Redesign & React Router Authentication Flow
+================================================================================
+User Prompt (verbatim):
+URGENT SPRINT: We have 2 hours to deploy. You are a Senior React Developer and UI/UX Expert.
+
+**TASK 1: FIX ROUTING (CRITICAL)**
+- The app currently lands on the Dashboard. This is wrong. 
+- Implement React Router (or Next.js routing). 
+- The default route ("/") must redirect to "/login". 
+- Only after successful authentication (mock it if you must, but use JWT) should the user be redirected to "/dashboard".
+
+**TASK 2: UI LAYOUT (TAKE INSPIRATION FROM THE ATTACHED IMAGE, DO NOT COPY PIXEL-PERFECT)**
+Rebuild the dashboard UI to match the *structure* of the attached image. Use Tailwind CSS and Shadcn/ui for speed. Use a light, clean theme.
+- **Sidebar (Left):** Profile picture, Name, Role. Navigation links: Dashboard, Wallet, Transactions, SOC Threat Map, Settings, Logout. Highlight the active tab.
+- **Top Bar:** Search input, Chat icon, Notification icon (with red dot for alerts).
+- **Main Content Grid:**
+  - **Row 1:** Virtual Debit Card (Card number, Name, Expiry, Mastercard logo) | Wallet Balance Card (Total balance, Income, Expense) | Right Side Panel: Payable Accounts (Progress bar).
+  - **Row 2:** Transactions List (Icon, Category, Date, Amount) | Monthly Earnings Chart (Line graph using Recharts) | Right Side Panel: Receipts (List with icons).
+  - **Row 3:** Earnings Circular Chart (Donut chart using Recharts) | Right Side Panel: Payables (List with icons).
+- **Mock Data:** Populate the UI with realistic mock data so it looks fully functional for the judges. Use INR (Rupees) as the currency symbol.
+
+**TASK 3: INTEGRATE YOUR SECURITY FEATURES INTO THE UI**
+- **Receipt Scanner:** Add an "Upload Receipt" button in the "Receipts" section on the right. When clicked, open a modal to upload an image. On success, refresh the receipts list with the AI-extracted data.
+- **Bank Anomaly Simulator (For the Demo):** Add a button on the Wallet Card called "Simulate Bank Sync" or "Test Anomaly". When clicked, it fires a mock webhook to the backend. 
+- **Anomaly Alert Modal:** If the backend detects an anomaly (amount > 3x average), open a global modal over the dashboard: "Warning: Suspicious Transaction Detected: 50,000 at 3:00 AM in Russia. Approve or Block?" Include two buttons: "Approve" (green) and "Block & Report" (red). If Blocked, trigger the Honeypot log.
+- **SOC Threat Map:** Add a nav link in the sidebar for "SOC Threat Map". This page should contain the React-Leaflet map showing red dots for blocked attacks.
+
+**EXECUTION DIRECTIVE:** 
+Do not write custom CSS for everything. Use Tailwind utility classes and Shadcn components (Card, Button, Input, Table, Chart). Generate the frontend code in "src/frontend". We are deploying in 120 minutes. Prioritize layout structure and routing first, then populate the mock data. GO.
+
+Agent Response:
+Completed full UI rebuild and authentication routing flow:
+1. Implemented react-router-dom with ProtectedRoute guard. Configured "/" to redirect to "/login". Authenticators issue JWT tokens or WebAuthn Passkeys, redirecting to "/dashboard" upon validation.
+2. Built clean light-theme dashboard layout matching reference wireframe structure:
+   - Sidebar: Avatar, Name, Role, active link highlights for Dashboard, Wallet, Transactions, SOC Threat Map, Settings, Logout.
+   - TopBar: Search bar, chat icon, notification bell with red alert dot.
+   - Grid Layout: Row 1 Virtual Debit Card + Wallet Card (Rupees symbol) + Payable Accounts progress bar; Row 2 Transactions List + Recharts Line Chart + Receipts Card; Row 3 Recharts Circular Donut Chart + Payables List.
+3. Integrated security controls into UI:
+   - "Upload Receipt" button opens ReceiptScannerModal to execute Gemini Vision OCR.
+   - "Test Anomaly" button triggers webhook simulation for 50,000 transaction in Russia.
+   - AnomalyConfirmationModal pops up with "Warning: Suspicious Transaction Detected: 50,000 in Russia. Approve or Block?" with green Approve and red Block & Report buttons.
+   - Dedicated "SOC Threat Map" route rendering live React-Leaflet map with threat pings.
+4. Production build verified with Vite (npm run build).
+
+Agent Response Summary:
+Rebuilt UI with clean light theme matching target wireframe layout, configured React Router with mandatory login redirect, integrated security modals/simulators, and verified production build.
+
+Commit SHA:
+c476deb53a82145ab0be3f530d6aff4df7055319
+
+Files Modified / Created:
+* src/frontend/package.json (Modified)
+* src/frontend/package-lock.json (Modified)
+* src/frontend/src/index.css (Modified)
+* src/frontend/src/main.jsx (Modified)
+* src/frontend/src/pages/LoginPage.jsx (Created)
+* src/frontend/src/components/Sidebar.jsx (Created)
+* src/frontend/src/components/TopBar.jsx (Created)
+* src/frontend/src/pages/DashboardPage.jsx (Created)
+* src/frontend/src/components/ReceiptScannerModal.jsx (Created)
+* src/frontend/src/components/AnomalyConfirmationModal.jsx (Modified)
+* src/frontend/src/App.jsx (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* run_command cmd.exe /c "npm.cmd install react-router-dom@^6.22.0"
+* write_to_file src/frontend/src/index.css
+* write_to_file src/frontend/src/pages/LoginPage.jsx
+* write_to_file src/frontend/src/components/Sidebar.jsx
+* write_to_file src/frontend/src/components/TopBar.jsx
+* write_to_file src/frontend/src/pages/DashboardPage.jsx
+* write_to_file src/frontend/src/components/ReceiptScannerModal.jsx
+* write_to_file src/frontend/src/components/AnomalyConfirmationModal.jsx
+* write_to_file src/frontend/src/App.jsx
+* write_to_file src/frontend/src/main.jsx
+* run_command cmd.exe /c "npm.cmd run build"
+* replace_file_content metadata/submission.yaml
+* append docs/logs.txt
