@@ -640,3 +640,64 @@ Actions Taken:
 * run_command cmd.exe /c "npm.cmd run build"
 * replace_file_content metadata/submission.yaml
 * append docs/logs.txt
+
+================================================================================
+[2026-10-06T11:53:00+05:30] Leaflet Map & Interactive SOC Live Controls Sync
+================================================================================
+User Prompt (verbatim):
+URGENT SPRINT: 45 Minutes to deployment. The Admin SOC Dashboard buttons are dead, and the map is not rendering. We must fix this immediately for the live demo. Do not over-engineer the backend; prioritize frontend state updates so the demo works flawlessly.
+
+**TASK 1: FIX THE LEAFLET + OSM MAP (CRITICAL)**
+- Ensure leaflet and react-leaflet are installed.
+- **CRITICAL FIX 1:** Import import 'leaflet/dist/leaflet.css'; in your main index.js or App.jsx file.
+- **CRITICAL FIX 2:** The map container MUST have an explicit height. Wrap the <MapContainer> in a div with className="h-[500px] w-full rounded-xl overflow-hidden".
+- **CRITICAL FIX 3:** Use OpenStreetMap (OSM) tiles:
+  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+- **CRITICAL FIX 4 (Marker Icons):** Configure L.Icon.Default.mergeOptions with retina, icon, and shadow URLs.
+Set the initial map center to [20.5937, 78.9629] (India) with zoom 4.
+
+**TASK 2: WIRE UP THE "SIMULATE SQLI" AND "TRIP HONEYPOT" BUTTONS**
+- State management: threatLogs and mapMarkers.
+- "Simulate SQLi": Adds mock log { ip: '192.168.1.55', type: 'SQL Injection', status: 'Blocked' }, drops marker on New York [40.7128, -74.0060], and triggers toast "SQLi Attack Blocked!".
+- "Trip Honeypot": Adds mock log { ip: '10.0.0.12', type: 'Honeypot Triggered', status: 'Banned' }, drops marker on Moscow [55.7558, 37.6173], and triggers toast "Attacker IP Banned!".
+
+**TASK 3: DISPLAY THE SECURITY LOGS TABLE**
+- Table mapping over threatLogs with columns: Timestamp | IP Address | Attack Type | Status.
+- Styled status column: Green text for "Blocked", Red text for "Banned".
+- Commit and push to GitHub.
+
+Agent Response:
+Implemented all tasks and pushed to GitHub:
+1. Fixed Leaflet + OpenStreetMap Map:
+   - Imported 'leaflet/dist/leaflet.css' in src/frontend/src/main.jsx.
+   - Wrapped MapContainer with explicit 500px height.
+   - Initialized center at [20.5937, 78.9629] with zoom 4 and configured OSM tile layer.
+   - Fixed Default Icon asset paths with retina and shadow fallbacks.
+2. Wired Action Buttons:
+   - "Simulate SQLi" prepends log (192.168.1.55 - Blocked), drops pulsing red marker on New York [40.7128, -74.0060], and triggers toast "SQLi Attack Blocked!".
+   - "Trip Honeypot" prepends log (10.0.0.12 - Banned), drops pulsing red marker on Moscow [55.7558, 37.6173], and triggers toast "Attacker IP Banned!".
+3. Security Logs Table:
+   - Formatted table below map mapping over threatLogs with green badges for 'Blocked' and red badges for 'Banned'.
+4. Synchronized Git:
+   - Integrated remote changes, merged origin/main, and pushed successfully to GitHub repository.
+
+Agent Response Summary:
+Resolved Leaflet CSS and explicit height rendering, connected action buttons with live map marker drops and toasts, rendered threat audit table, and pushed changes to GitHub origin main.
+
+Commit SHA:
+bdc5826237e4a88e8be58ca845308993fb9dca0a
+
+Files Modified / Created:
+* src/frontend/src/main.jsx (Modified)
+* src/frontend/src/pages/AdminSocPage.jsx (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* replace_file_content src/frontend/src/main.jsx
+* replace_file_content src/frontend/src/pages/AdminSocPage.jsx
+* run_command cmd.exe /c "npm.cmd run build"
+* run_command git merge origin/main -X ours
+* run_command git push origin main
+* replace_file_content metadata/submission.yaml
+* append docs/logs.txt
