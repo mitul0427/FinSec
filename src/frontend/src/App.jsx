@@ -15,12 +15,14 @@ import { transactionApi } from './utils/api';
 import { useAuth } from './context/AuthContext';
 import { CheckCircle2, ShieldAlert } from 'lucide-react';
 
-// Protected Route Guard
-const ProtectedRoute = ({ children }) => {
+// Protected Route Guard with RBAC support
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
   const token = localStorage.getItem('finsec_access_token');
+  const mockUserStr = localStorage.getItem('finsec_mock_user');
+  const effectiveUser = user || (mockUserStr ? JSON.parse(mockUserStr) : null);
 
-  if (loading && !token) {
+  if (loading && !token && !mockUserStr) {
     return (
       <div className="min-h-screen bg-[#eef2f6] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -28,9 +30,20 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // If token is missing, redirect to login
-  if (!user && !token) {
+  // If unauthenticated, redirect to login
+  if (!effectiveUser && !token) {
     return <Navigate to="/login" replace />;
+  }
+
+  // RBAC gate: Admin routes are ONLY accessible by admins
+  if (adminOnly) {
+    const isAdmin =
+      effectiveUser?.role?.toLowerCase() === 'admin' ||
+      effectiveUser?.email?.toLowerCase().includes('admin');
+
+    if (!isAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;
@@ -177,7 +190,7 @@ export function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute adminOnly>
               <DashboardShell alertCount={alertCount}>
                 <AdminSocPage />
               </DashboardShell>

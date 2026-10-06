@@ -19,7 +19,9 @@ export const Sidebar = () => {
   // Read mock user if present in local state
   const mockUserStr = localStorage.getItem('finsec_mock_user');
   const effectiveUser = user || (mockUserStr ? JSON.parse(mockUserStr) : null);
-  const isAdmin = effectiveUser?.role === 'ADMIN' || effectiveUser?.email?.includes('admin');
+  const isAdmin =
+    (effectiveUser?.role || '').toLowerCase() === 'admin' ||
+    effectiveUser?.email?.toLowerCase().includes('admin');
 
   const handleLogout = async () => {
     localStorage.removeItem('finsec_access_token');
@@ -32,8 +34,12 @@ export const Sidebar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Wallet', path: '/wallet', icon: Wallet },
     { name: 'Transactions', path: '/transactions', icon: Receipt },
-    // "SOC Threat Map" goes to /admin
-    { name: 'SOC Threat Map', path: '/admin', icon: ShieldAlert, adminOnly: false },
+    ...(isAdmin
+      ? [
+          { name: 'SOC Threat Map', path: '/admin', icon: ShieldAlert, badge: 'SOC' },
+          { name: 'Admin Panel', path: '/admin', icon: ShieldCheck, badge: 'ADMIN' }
+        ]
+      : []),
     { name: 'Settings', path: '/settings', icon: Settings }
   ];
 
@@ -91,9 +97,15 @@ export const Sidebar = () => {
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.name}</span>
-                {item.path === '/admin' && (
-                  <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-bold">
-                    SOC
+                {item.badge && (
+                  <span
+                    className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                      item.badge === 'SOC'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-indigo-100 text-indigo-700'
+                    }`}
+                  >
+                    {item.badge}
                   </span>
                 )}
               </NavLink>
