@@ -13,11 +13,13 @@ import {
 } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/auth.js';
 
+import { authRateLimiter } from '../middleware/security.js';
+
 const router = Router();
 
 // Password Auth
 router.post('/register', register);
-router.post('/login', login);
+router.post('/login', authRateLimiter, login);
 router.post('/refresh', refreshToken);
 router.post('/logout', logout);
 

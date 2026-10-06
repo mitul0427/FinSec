@@ -49,15 +49,7 @@ export const scanReceipt = async (req, res) => {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-        const prompt = `You are a financial receipt parser. Analyze this receipt image and return ONLY a valid JSON object with these keys:
-{
-  "merchant": "Name of store or merchant",
-  "amount": numeric total amount (e.g. 45.50),
-  "date": "YYYY-MM-DD",
-  "category": "One of: Food & Dining, Shopping, Utilities, Travel, Healthcare, Entertainment, Other",
-  "description": "Brief summary of purchased items"
-}
-Do not include any markdown fences, backticks, or text outside the JSON object.`;
+        const prompt = 'Analyze this receipt image. Extract the merchant name, total amount, date, and category. Return ONLY a valid JSON object. If you cannot read the receipt, return {"error": "unreadable"}. Do not hallucinate data.';
 
         const imagePart = {
           inlineData: {
@@ -68,22 +60,27 @@ Do not include any markdown fences, backticks, or text outside the JSON object.`
 
         const result = await model.generateContent([prompt, imagePart]);
         const responseText = result.response.text().trim();
-        const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         extractedData = JSON.parse(cleanJson);
       } catch (geminiError) {
-        console.warn('Gemini OCR API error, using intelligent parser fallback:', geminiError.message);
+        console.warn('Gemini OCR API error:', geminiError.message);
+        return res.status(502).json({
+          error: 'OCR_PROCESSING_FAILED',
+          message: `Gemini OCR failure: ${geminiError.message}`
+        });
       }
+    } else {
+      return res.status(400).json({
+        error: 'GEMINI_API_KEY_REQUIRED',
+        message: 'No Gemini API key configured. Please set GEMINI_API_KEY in backend .env or enter your personal Gemini API key in Profile Settings.'
+      });
     }
 
-    // Smart Fallback Parser if Gemini key is unset or rate limited
-    if (!extractedData) {
-      extractedData = {
-        merchant: 'Scanned Merchant Store',
-        amount: 38.50,
-        date: new Date().toISOString().split('T')[0],
-        category: 'Food & Dining',
-        description: 'Auto-extracted from sanitized receipt image'
-      };
+    if (extractedData && extractedData.error === 'unreadable') {
+      return res.status(422).json({
+        error: 'RECEIPT_UNREADABLE',
+        message: 'The uploaded image could not be read as a valid receipt. Please upload a clearer photo.'
+      });
     }
 
     return res.json({

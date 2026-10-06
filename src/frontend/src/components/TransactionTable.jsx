@@ -231,9 +231,23 @@ export const TransactionTable = ({
                     </span>
                   </td>
                   <td className="py-3 px-4 text-slate-200">
-                    <div className="font-medium">{sanitizePlain(t.description)}</div>
+                    <div className="font-medium flex items-center space-x-2">
+                      <span>{sanitizePlain(t.description)}</span>
+                      {t.status === 'PENDING_CONFIRMATION' && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800">
+                          ON HOLD
+                        </span>
+                      )}
+                      {t.status === 'BLOCKED' && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                          BLOCKED
+                        </span>
+                      )}
+                    </div>
                     {t.merchant && (
-                      <div className="text-[11px] text-slate-400 font-mono">{sanitizePlain(t.merchant)}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        {sanitizePlain(t.merchant)} {t.location ? `• ${sanitizePlain(t.location)}` : ''}
+                      </div>
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-mono font-semibold whitespace-nowrap">

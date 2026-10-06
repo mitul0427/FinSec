@@ -49,6 +49,8 @@ model Transaction {
   description String
   merchant    String?
   receiptUrl  String?
+  status      String   @default("COMPLETED") // "COMPLETED" | "PENDING_CONFIRMATION" | "BLOCKED"
+  location    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

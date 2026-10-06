@@ -12,6 +12,9 @@ import { AuthModal } from './components/AuthModal';
 import { PasskeyEnrollment } from './components/PasskeyEnrollment';
 import { ProfileSettings } from './components/ProfileSettings';
 import { AddTransactionModal } from './components/AddTransactionModal';
+import io from 'socket.io-client';
+import { AnomalyConfirmationModal } from './components/AnomalyConfirmationModal';
+import { BankSimulatorWidget } from './components/BankSimulatorWidget';
 import { transactionApi } from './utils/api';
 import { useAuth } from './context/AuthContext';
 import { Shield, Sparkles, AlertTriangle } from 'lucide-react';
@@ -30,6 +33,30 @@ export function App() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [addTxModalOpen, setAddTxModalOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [suspiciousTxAlert, setSuspiciousTxAlert] = useState(null);
+
+  // Real-time socket listener for bank anomalies & security alerts
+  useEffect(() => {
+    const socket = io('/', {
+      transports: ['websocket', 'polling']
+    });
+
+    if (user?.id) {
+      socket.emit('join_user', user.id);
+    }
+
+    socket.on('suspicious_transaction', (data) => {
+      console.log('[Bank Anomaly Alert Received]:', data);
+      setSuspiciousTxAlert(data);
+      setAlertCount((prev) => prev + 1);
+    });
+
+    socket.on('security_alert', (secAlert) => {
+      setAlertCount((prev) => prev + 1);
+    });
+
+    return () => socket.disconnect();
+  }, [user]);
 
   // Fetch financial summary and transactions
   const loadData = async () => {
@@ -107,6 +134,7 @@ export function App() {
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
             <MetricCards summary={summary} />
+            <BankSimulatorWidget onSimulationComplete={loadData} />
             <ExpenseCharts summary={summary} transactions={transactions} />
             <TransactionTable
               transactions={transactions}
@@ -166,6 +194,15 @@ export function App() {
         onClose={() => setAddTxModalOpen(false)}
         onSuccess={loadData}
       />
+
+      {/* Real-Time Bank Anomaly & Blocking Modal */}
+      {suspiciousTxAlert && (
+        <AnomalyConfirmationModal
+          alertData={suspiciousTxAlert}
+          onClose={() => setSuspiciousTxAlert(null)}
+          onActionResolved={loadData}
+        />
+      )}
     </div>
   );
 }

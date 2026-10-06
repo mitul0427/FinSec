@@ -21,6 +21,7 @@ import budgetRoutes from './routes/budgetRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import socRoutes from './routes/socRoutes.js';
+import bankRoutes from './routes/bankRoutes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +74,9 @@ app.use('/api/v1/budgets', budgetRoutes);
 app.use('/api/v1/receipts', receiptRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/admin', socRoutes); // Includes Honeypot (/api/v1/admin/login-v1) and SOC Logs
+app.use('/api/admin', socRoutes); // Supports unversioned /api/admin/login-v1 honeypot directly
+app.use('/api/v1/bank', bankRoutes);
+app.use('/api/bank', bankRoutes); // Supports exact /api/bank/webhook/transaction path
 
 // 5. 404 Handler
 app.use((req, res) => {

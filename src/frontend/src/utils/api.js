@@ -138,3 +138,9 @@ export const socApi = {
   simulateAttack: (data) => apiFetch('/admin/simulate-attack', { method: 'POST', body: JSON.stringify(data) }),
   triggerHoneypot: (data) => apiFetch('/admin/login-v1', { method: 'POST', body: JSON.stringify(data) })
 };
+
+export const bankApi = {
+  simulateWebhook: (data) => apiFetch('/bank/webhook/transaction', { method: 'POST', body: JSON.stringify(data) }),
+  approve: (id) => apiFetch(`/bank/transaction/${id}/approve`, { method: 'POST' }),
+  block: (id) => apiFetch(`/bank/transaction/${id}/block`, { method: 'POST' })
+};

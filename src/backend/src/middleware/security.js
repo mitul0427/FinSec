@@ -17,6 +17,42 @@ export const apiRateLimiter = rateLimit({
   }
 });
 
+// Strict Rate Limiter for Login (Anti-Bruteforce: 5 attempts per minute)
+export const authRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'TOO_MANY_LOGIN_ATTEMPTS',
+    message: 'Rate limit exceeded: Maximum 5 login attempts per minute allowed to protect against credential stuffing.'
+  }
+});
+
+// Strict Rate Limiter for Receipt Upload (10 uploads per minute)
+export const receiptRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'TOO_MANY_RECEIPT_UPLOADS',
+    message: 'Rate limit exceeded: Maximum 10 receipt scans per minute.'
+  }
+});
+
+// Strict Rate Limiter for Webhook Simulation (30 requests per minute)
+export const webhookRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'TOO_MANY_WEBHOOK_CALLS',
+    message: 'Rate limit exceeded: Maximum 30 bank webhook transactions per minute.'
+  }
+});
+
 // 2. Helmet Security Headers with strict Content Security Policy
 export const helmetMiddleware = helmet({
   contentSecurityPolicy: {

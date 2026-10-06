@@ -76,6 +76,11 @@ export const getSummary = async (req, res) => {
     const categoryBreakdown = {};
 
     for (const t of transactions) {
+      // ZeroTrust: Only COMPLETED transactions affect account balance and spending metrics
+      if (t.status === 'PENDING_CONFIRMATION' || t.status === 'BLOCKED') {
+        continue;
+      }
+
       if (t.type === 'INCOME') {
         totalIncome += t.amount;
       } else {

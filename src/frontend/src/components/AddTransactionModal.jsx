@@ -15,6 +15,8 @@ const CATEGORIES = [
   'Other'
 ];
 
+import { sanitizePlain } from '../utils/sanitize';
+
 export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
   const [type, setType] = useState('EXPENSE');
   const [category, setCategory] = useState('Food & Dining');
@@ -32,13 +34,17 @@ export const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
     setLoading(true);
     setError(null);
 
+    // Apply DOMPurify sanitization
+    const cleanDescription = sanitizePlain(description);
+    const cleanMerchant = sanitizePlain(merchant);
+
     try {
       const res = await transactionApi.create({
         type,
         category,
         amount: parseFloat(amount),
-        description,
-        merchant: merchant || undefined,
+        description: cleanDescription,
+        merchant: cleanMerchant || undefined,
         date: new Date(date).toISOString()
       });
 

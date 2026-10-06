@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { scanReceipt } from '../controllers/receiptController.js';
 import { requireAuth } from '../middleware/auth.js';
+import { receiptRateLimiter } from '../middleware/security.js';
 
 const router = Router();
 
@@ -13,6 +14,6 @@ const upload = multer({
 
 router.use(requireAuth);
 
-router.post('/scan', upload.single('receipt'), scanReceipt);
+router.post('/scan', receiptRateLimiter, upload.single('receipt'), scanReceipt);
 
 export default router;

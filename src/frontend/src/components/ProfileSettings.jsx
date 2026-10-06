@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Sliders, Key, CheckCircle, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+import { sanitizePlain } from '../utils/sanitize';
+
 export const ProfileSettings = ({ isOpen, onClose }) => {
   const { user, updateProfile } = useAuth();
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -17,7 +19,7 @@ export const ProfileSettings = ({ isOpen, onClose }) => {
     setSaved(false);
 
     try {
-      const updates = { fullName };
+      const updates = { fullName: sanitizePlain(fullName) };
       if (customGeminiKey.trim()) {
         updates.customGeminiKey = customGeminiKey.trim();
       }

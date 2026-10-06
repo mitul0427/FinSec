@@ -202,20 +202,26 @@ export const ReceiptScanner = ({ onTransactionCreated }) => {
               <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                 <div className="p-2 rounded bg-slate-900 border border-slate-800">
                   <div className="text-[10px] text-slate-400">Merchant</div>
-                  <div className="text-slate-100 font-semibold truncate">{result.receipt.merchant}</div>
+                  <div className="text-slate-100 font-semibold truncate">{result.receipt.merchant || result.receipt.merchant_name || 'N/A'}</div>
                 </div>
                 <div className="p-2 rounded bg-slate-900 border border-slate-800">
                   <div className="text-[10px] text-slate-400">Total Amount</div>
-                  <div className="text-emerald-400 font-bold">${parseFloat(result.receipt.amount).toFixed(2)}</div>
+                  <div className="text-emerald-400 font-bold">${parseFloat(result.receipt.amount || result.receipt.total_amount || 0).toFixed(2)}</div>
                 </div>
                 <div className="p-2 rounded bg-slate-900 border border-slate-800">
                   <div className="text-[10px] text-slate-400">Category</div>
-                  <div className="text-slate-200">{result.receipt.category}</div>
+                  <div className="text-slate-200">{result.receipt.category || 'N/A'}</div>
                 </div>
                 <div className="p-2 rounded bg-slate-900 border border-slate-800">
                   <div className="text-[10px] text-slate-400">Date</div>
-                  <div className="text-slate-200">{result.receipt.date}</div>
+                  <div className="text-slate-200">{result.receipt.date || 'N/A'}</div>
                 </div>
+              </div>
+
+              {/* Raw JSON Extracted Output */}
+              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-cyan-300 overflow-x-auto max-h-36">
+                <div className="text-[10px] text-slate-400 mb-1 font-sans font-medium">Extracted JSON Payload:</div>
+                <pre>{JSON.stringify(result.receipt, null, 2)}</pre>
               </div>
 
               {added ? (
