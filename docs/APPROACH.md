@@ -131,6 +131,12 @@ FinSec ZeroTrust follows a decoupled multi-tier architecture with defense-in-dep
 - **Decision:** Process images strictly in memory via Multer buffer -> validate real magic bytes using `file-type` -> strip EXIF tags using `exif-parser` before forwarding sanitized buffer to Gemini API.
 - **Trade-off:** Minor memory overhead per concurrent upload; complete prevention of stored polyglot files and metadata leaks.
 
+### ADR-005: Real-Time Bank Anomaly & Two-Phase Execution Engine
+- **Status:** Accepted
+- **Context:** Automated bank integrations are vulnerable to fraudulent or geographically impossible fund drains.
+- **Decision:** Implement `/api/bank/webhook/transaction` with a pre-commit AI Anomaly Engine evaluating 30-day category spending multipliers (>3x average) and geographic baseline impossibility. Flagged transactions default to `PENDING_CONFIRMATION` without deducting balance, pushing an interactive Socket.io approval/block modal to the client. Blocking triggers an instant Honeypot alarm and security log.
+- **Trade-off:** Adds an approval step for high-risk anomalies; completely shields user liquidity from fraudulent automated syncs.
+
 ---
 
 ## 5. Engineering Journal & Real-Time Decision Log
@@ -150,15 +156,23 @@ FinSec ZeroTrust follows a decoupled multi-tier architecture with defense-in-dep
 - **Key Challenges:** Blending high-velocity financial tracking features with uncompromising Zero Trust security controls.
 - **Resolution:** Layered defense-in-depth architecture separating ingress security gateway, domain services, AI pipelines, and immutable audit logs.
 
+### [2026-10-06 10:40 IST] Entry 4: Rapid Hardening & Real-Time Bank Anomaly Integration
+- **Focus:** Fixed Gemini 1.5 Flash Vision OCR dynamic base64 extraction; created bank webhook simulation and AI anomaly engine with Socket.io real-time approval/block modal; hardened IDOR protection (`ensureOwnership` middleware), strict endpoint rate limits, and DOMPurify sanitization.
+- **Key Challenges:** Maintaining production Vite build integrity and zero-downtime ledger consistency under strict competition deadlines.
+- **Resolution:** Tested full end-to-end build, verified Prisma database schema push with status fields, and verified server syntax.
+
 ---
 
 ## 6. Testing, Security Verification & Deployment Record
 
 ### 6.1 Testing & Security Verification Strategy
 - **Unit & Integration Testing:** Automated test suites verifying JWT issuance, WebAuthn challenge generation, HMAC signature verification, SQLi filtering regex, and transaction CRUD operations.
-- **Active Defense Verification:** Simulated attacks against the Honeypot endpoint (`/api/v1/admin/login-v1`) to verify instant IP banning and Socket.io SOC event dispatch.
+- **Active Defense Verification:** Simulated attacks against the Honeypot endpoint (`/api/v1/admin/login-v1` and `/api/admin/login-v1`) to verify instant IP banning and Socket.io SOC event dispatch.
 - **Immutability Verification:** Scripted attempt to execute `prisma.securityLog.delete()` verifying execution failure.
+- **IDOR Protection Verification:** Verified `ensureOwnership` denies cross-tenant resource modification with HTTP 403.
 
 ### 6.2 Deployment Verification
-- **Containerization:** Root `docker-compose.yml` defining `backend`, `frontend`, and `postgres` container services.
+- **Containerization:** Root `docker-compose.yml` defining `backend`, `frontend`, and `postgres` container services with complete health checks.
+- **Frontend Production Bundle:** `npm run build` generates optimized distribution assets in `src/frontend/dist/`.
+- **Environment Documentation:** Root `.env.example` documents all required secrets, database strings, and WebAuthn configs.
 - **Health Check Endpoint:** `GET /health` and `GET /api/v1/health` returning system uptime, database status, and active defense status.

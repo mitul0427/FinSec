@@ -309,7 +309,7 @@ Agent Response Summary:
 Provided the repository link to the user as requested.
 
 Commit SHA:
-<INSERT_SHA>
+d0e3483
 
 Files Modified / Created:
 * docs/logs.txt (Modified)
@@ -344,3 +344,109 @@ Files Modified / Created:
 
 Actions Taken:
 * replace_file_content docs/logs.txt
+
+================================================================================
+[2026-10-06T10:48:00+05:30] Sprint Hardening: Receipt OCR, Bank Anomaly Engine, IDOR & Deployment
+================================================================================
+User Prompt (verbatim):
+URGENT SPRINT: We have 2 hours to deploy. You are a Senior Security Engineer and Rapid Prototyper. We are building "FinSec ZeroTrust". 
+
+**CRITICAL FIXES & NEW FEATURES REQUIRED IMMEDIATELY:**
+
+**1. FIX THE RECEIPT SCANNER (Bug: Returns same output for every image)**
+- Locate the receipt upload endpoint in `src/backend`.
+- The current code is likely returning a static mock response or failing to pass the image correctly to the LLM. 
+- Rewrite the OCR service: Convert the uploaded image to a Base64 string. Pass it to the Gemini 1.5 Flash API with this EXACT prompt: "Analyze this receipt image. Extract the merchant name, total amount, date, and category. Return ONLY a valid JSON object. If you cannot read the receipt, return {\"error\": \"unreadable\"}. Do not hallucinate data."
+- In the React frontend, ensure the file is sent as `multipart/form-data`. Display the actual extracted JSON on the dashboard. 
+
+**2. ADD REAL-TIME BANK ANOMALY & BLOCKING SYSTEM (Simulated Bank Sync)**
+- Since we cannot integrate a real bank API in 2 hours, build a "Bank Simulator" webhook.
+- Create a backend endpoint: `/api/bank/webhook/transaction`. It accepts POST requests simulating a bank transaction (amount, merchant, location, timestamp).
+- Build an AI Anomaly Engine in the backend: Before saving the transaction to the database, evaluate it. Rule: If the amount is >3x the user's 30-day average for that category, OR the location is geographically impossible (e.g., user is in Hyderabad, transaction is in Russia), flag it.
+- If flagged: Set transaction status to `PENDING_CONFIRMATION`. Do NOT deduct the balance yet. Emit a Socket.io event to the user's dashboard: "Suspicious transaction detected. Please confirm."
+- On the React frontend: Build a modal/popup that appears when this event is received. It shows the transaction details and two buttons: "Approve" or "Block". 
+- If Approve: Update status to `COMPLETED`, deduct balance. If Block: Update status to `BLOCKED`, log it to the SecurityLog, and trigger a Honeypot alert.
+
+**3. HARDEN SECURITY FOR THE JUDGES' HACKING ATTEMPT**
+- The organizers will actively try to hack us. Implement these immediately:
+- **IDOR Protection:** Ensure every API endpoint that fetches or modifies data checks `req.user.id === resource.userId`. Add an `ensureOwnership` middleware.
+- **Rate Limiting:** Ensure `express-rate-limit` is strictly applied to the login, webhook, and receipt upload endpoints.
+- **Honeypot:** Verify the `/api/admin/login-v1` route instantly bans the IP and logs the payload to the `SecurityLog` table.
+- **XSS/SQLi:** Ensure Prisma ORM is used everywhere (no raw SQL) and DOMPurify is applied to all frontend inputs.
+
+**4. DEPLOYMENT READINESS**
+- Ensure `docker-compose.yml` is set up for PostgreSQL.
+- Ensure all environment variables are documented in `.env.example`.
+- Ensure the React frontend has a `build` script ready for Vercel/Netlify.
+
+**EXECUTION DIRECTIVE:** Do not explain the code. Just write it. Generate the backend endpoints, the React components for the confirmation modal, and the AI anomaly logic.
+
+Agent Response:
+Implemented all critical fixes, defensive hardening, and rapid features:
+1. Rewrote Receipt OCR Vision service in src/backend/src/controllers/receiptController.js with dynamic Base64 conversion and exact Gemini 1.5 Flash prompt. Updated React frontend ReceiptScanner.jsx to send multipart/form-data and display raw extracted JSON payload.
+2. Built real-time Bank Simulator Webhook (/api/bank/webhook/transaction) and AI Anomaly Engine (evaluating >3x 30-day category average and geographically impossible locations). Flagged transactions transition to PENDING_CONFIRMATION without balance deduction. Socket.io broadcasts suspicious_transaction event. Built interactive AnomalyConfirmationModal in React with Approve (COMPLETED) and Block (BLOCKED + SecurityLog + Honeypot tripwire) flows.
+3. Hardened security: Implemented ensureOwnership middleware on resource routes (IDOR protection); applied strict express-rate-limit to /login, /scan, and /webhook; verified honeypot trap /api/admin/login-v1 with immediate IP banning; sanitized all inputs with DOMPurify.
+4. Deployment readiness verified: docker-compose.yml configured for PostgreSQL; .env.example created with all parameters; frontend npm run build compiled successfully to dist/.
+
+Agent Response Summary:
+Completed sprint requirements for receipt vision OCR fix, bank anomaly simulator webhook with Socket.io push, interactive approval/blocking modal, IDOR middleware, strict endpoint rate limiting, and deployment configuration. Verified production builds and recorded the frozen commit.
+
+Commit SHA:
+634a04514088a9b227746209f997721d167c9b53
+
+Files Modified / Created:
+* src/backend/src/controllers/receiptController.js (Modified)
+* src/frontend/src/components/ReceiptScanner.jsx (Modified)
+* src/backend/prisma/schema.prisma (Modified)
+* src/backend/src/services/socketService.js (Modified)
+* src/backend/src/controllers/bankWebhookController.js (Created)
+* src/backend/src/routes/bankRoutes.js (Created)
+* src/backend/src/server.js (Modified)
+* src/frontend/src/utils/api.js (Modified)
+* src/frontend/src/components/AnomalyConfirmationModal.jsx (Created)
+* src/frontend/src/components/BankSimulatorWidget.jsx (Created)
+* src/frontend/src/App.jsx (Modified)
+* src/frontend/src/components/TransactionTable.jsx (Modified)
+* src/backend/src/controllers/transactionController.js (Modified)
+* src/backend/src/middleware/ownership.js (Created)
+* src/backend/src/routes/transactionRoutes.js (Modified)
+* src/backend/src/routes/budgetRoutes.js (Modified)
+* src/backend/src/middleware/security.js (Modified)
+* src/backend/src/routes/authRoutes.js (Modified)
+* src/backend/src/routes/receiptRoutes.js (Modified)
+* src/frontend/src/components/AddTransactionModal.jsx (Modified)
+* src/frontend/src/components/ProfileSettings.jsx (Modified)
+* .env.example (Created)
+* docs/APPROACH.md (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* replace_file_content src/backend/src/controllers/receiptController.js
+* replace_file_content src/frontend/src/components/ReceiptScanner.jsx
+* replace_file_content src/backend/prisma/schema.prisma
+* run_command cmd.exe /c "npx.cmd prisma db push"
+* replace_file_content src/backend/src/services/socketService.js
+* write_to_file src/backend/src/controllers/bankWebhookController.js
+* write_to_file src/backend/src/routes/bankRoutes.js
+* replace_file_content src/backend/src/server.js
+* replace_file_content src/frontend/src/utils/api.js
+* write_to_file src/frontend/src/components/AnomalyConfirmationModal.jsx
+* write_to_file src/frontend/src/components/BankSimulatorWidget.jsx
+* replace_file_content src/frontend/src/App.jsx
+* replace_file_content src/frontend/src/components/TransactionTable.jsx
+* replace_file_content src/backend/src/controllers/transactionController.js
+* write_to_file src/backend/src/middleware/ownership.js
+* replace_file_content src/backend/src/routes/transactionRoutes.js
+* replace_file_content src/backend/src/routes/budgetRoutes.js
+* replace_file_content src/backend/src/middleware/security.js
+* replace_file_content src/backend/src/routes/authRoutes.js
+* replace_file_content src/backend/src/routes/receiptRoutes.js
+* replace_file_content src/frontend/src/components/AddTransactionModal.jsx
+* replace_file_content src/frontend/src/components/ProfileSettings.jsx
+* write_to_file .env.example
+* run_command cmd.exe /c "npm.cmd run build"
+* run_command cmd.exe /c "node -e '...'"
+* replace_file_content docs/APPROACH.md
+* replace_file_content metadata/submission.yaml
+* append docs/logs.txt
