@@ -936,3 +936,78 @@ Actions Taken:
 * replace_file_content src/backend/package.json
 * run_command git commit
 * run_command git push origin main
+
+================================================================================
+[2026-10-06T13:18:00+05:30] Rapid Deployment Hardening & Zero-Backend Dependency Stabilization
+================================================================================
+User Prompt (verbatim):
+URGENT: DEPLOYMENT CRASHING. 10 MINUTES TO DEADLINE. 
+We must deploy immediately. The main goal is to get a LIVE LINK for the judges. Feature completeness does not matter right now. Stability does. 
+
+**TASK 1: BYPASS BUILD ERRORS (CRITICAL)**
+- The deployment is failing because of strict linting or TypeScript errors.
+- If this is a Next.js project, open `next.config.js` and add: `eslint: { ignoreDuringBuilds: true }, typescript: { ignoreBuildErrors: true }`.
+- If this is a Vite/React project, check `package.json`. Change the build script to `"build": "vite build --emptyOutDir"`. Add a `vercel.json` file with `"buildCommand": "npm run build"` and `"outputDirectory": "dist"`.
+- Delete any unused variables or imports that are breaking the build.
+
+**TASK 2: HARDCODE / MOCK THE BACKEND (STOP THE CRASH)**
+- The backend is crashing the deployment. Comment out ALL `fetch` or `axios` calls to the local backend (e.g., `http://localhost:5000`).
+- Replace these calls with hardcoded `setTimeout` functions that update React state with mock data. 
+- The app must be fully interactive using ONLY frontend state. 
+
+**TASK 3: REMOVE HEAVY DEPENDENCIES IF THEY CRASH THE BUILD**
+- If `react-leaflet`, `@simplewebauthn`, or `socket.io-client` are causing build errors, REMOVE them from the code.
+- Replace the `<MapContainer>` with a simple `<div>` containing a static image of a world map or just a black box with red dots using CSS `absolute` positioning. 
+- Replace WebAuthn logic with a simple `setTimeout` that logs the user in after 1 second.
+
+**TASK 4: DATABASE FALLBACK**
+- If Prisma or PostgreSQL is crashing the build, comment out the database connection. Use a hardcoded array in memory for `users` and `transactions`.
+
+**EXECUTION DIRECTIVE:** 
+Do not try to fix the real bugs. Just comment them out, mock the data, and get the build to pass. We need a live URL. Make any change necessary to achieve a green "Deployed" status. GO.
+
+Agent Response:
+Hardened frontend for zero-dependency deployment and guaranteed green build on Vercel/Railway:
+
+1. Build Script & Vercel Config:
+   - Updated `src/frontend/package.json` build script to `"vite build --emptyOutDir"`.
+   - Created `src/frontend/vercel.json` with `"buildCommand": "npm run build"`, `"outputDirectory": "dist"`, and SPA catch-all rewrite to `/index.html`.
+   - Created root `vercel.json` for monorepo root deployments.
+
+2. Fully Mocked API Client (`src/frontend/src/utils/api.js`):
+   - Eliminated all real network calls to local backend.
+   - Replaced all service functions (`authApi`, `transactionApi`, `budgetApi`, `receiptApi`, `aiApi`, `socApi`, `bankApi`) with self-contained, reactive in-memory and `localStorage` state handlers.
+   - Full interactivity preserved: instant login/logout, transaction additions/deletions, balance calculations, receipt scanning, and bank anomaly confirmations.
+
+3. Zero-Dependency Cyber Threat Radar Canvas:
+   - Replaced Leaflet map container in `src/frontend/src/pages/AdminSocPage.jsx` with a sleek, high-tech SVG cyber neon world radar grid with absolute-positioned pulsing red threat markers.
+   - "Simulate SQLi" and "Trip Honeypot" action buttons remain fully functional, dynamically adding threat coordinates and populating the security logs.
+   - Preserved full 14-record Platform Users table with real-time search, status filter, and active/flagged toggling.
+
+4. Verified Production Build:
+   - Ran `vite build --emptyOutDir` successfully (2591 modules transformed, 0 errors, build completed in 12.01s).
+
+Agent Response Summary:
+Configured vercel.json, set build script to vite build --emptyOutDir, switched all API calls to pure local state mocks with zero network dependencies, replaced map with high-tech CSS radar canvas, verified build, and pushed to GitHub.
+
+Commit SHA:
+26e57260429974d487870bb811b39add251333e1
+
+Files Modified / Created:
+* src/frontend/package.json (Modified)
+* src/frontend/vercel.json (Created)
+* vercel.json (Created)
+* src/frontend/src/utils/api.js (Modified)
+* src/frontend/src/pages/AdminSocPage.jsx (Modified)
+* metadata/submission.yaml (Modified)
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* replace_file_content src/frontend/package.json
+* write_to_file src/frontend/vercel.json
+* write_to_file vercel.json
+* write_to_file src/frontend/src/utils/api.js
+* write_to_file src/frontend/src/pages/AdminSocPage.jsx
+* run_command npm run build
+* run_command git commit
+* run_command git push origin main
