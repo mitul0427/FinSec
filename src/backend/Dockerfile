@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Install openssl and libc6-compat for Prisma query engines on Alpine Linux
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -12,4 +15,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node src/server.js"]

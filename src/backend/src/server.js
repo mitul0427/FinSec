@@ -104,9 +104,10 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-server.listen(PORT, () => {
+const HOST = '0.0.0.0';
+server.listen(PORT, HOST, () => {
   console.log(`=======================================================`);
-  console.log(` FinSec ZeroTrust Gateway Initialized on port ${PORT}`);
+  console.log(` FinSec ZeroTrust Gateway Initialized on port ${PORT} (${HOST})`);
   console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(` Defense Shield: RateLimit(5/s), Helmet, SQLi Filter Active`);
   console.log(` Honeypot Trap: POST /api/v1/admin/login-v1`);
@@ -115,3 +116,4 @@ server.listen(PORT, () => {
 });
 
 export { app, server, io };
+export default app;

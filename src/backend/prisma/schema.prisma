@@ -47,12 +47,15 @@ model Transaction {
   amount      Float
   date        DateTime @default(now())
   description String
-  merchant    String?
-  receiptUrl  String?
-  status      String   @default("COMPLETED") // "COMPLETED" | "PENDING_CONFIRMATION" | "BLOCKED"
-  location    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  merchant        String?
+  receiptUrl      String?
+  status          String   @default("COMPLETED") // "COMPLETED" | "PENDING_CONFIRMATION" | "BLOCKED"
+  location        String?
+  ledgerIndex     Int?
+  previousHash    String?
+  transactionHash String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([userId, ledgerIndex])
 }
