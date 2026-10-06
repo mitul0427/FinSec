@@ -1017,3 +1017,29 @@ Actions Taken:
 * append docs/logs.txt
 * run_command git commit
 * run_command git push origin main --force
+
+================================================================================
+[2026-10-06T14:34:00+05:30] Continuous Deployment Workflow & Live URL Auto-Sync Clarification
+================================================================================
+User Prompt (verbatim):
+yeah now it is deployed and if i make any changes to the project now will it appear in the live link?
+
+Agent Response:
+Confirmed automated continuous deployment lifecycle with Vercel and GitHub:
+- Yes, absolutely. Because Vercel is connected to your GitHub repository (mitul0427/FinSec) on the main branch, any code changes pushed to main will automatically trigger a new Vercel deployment.
+- The rebuild takes approximately 15-25 seconds, and once completed, Vercel updates the live link instantly with zero downtime.
+- Recommended best practice: Commit and push via git push origin main, then check Vercel's Deployments tab to watch the automated build complete.
+
+Agent Response Summary:
+Clarified continuous deployment workflow, explaining that git pushes to main automatically trigger Vercel webhook builds and update the live link in ~20 seconds.
+
+Commit SHA:
+DEPLOY_CONFIRMATION_SHA
+
+Files Modified / Created:
+* docs/logs.txt (Modified)
+
+Actions Taken:
+* append docs/logs.txt
+* run_command git commit
+* run_command git push origin main
