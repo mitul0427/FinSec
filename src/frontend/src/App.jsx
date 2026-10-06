@@ -16,7 +16,7 @@ import { useAuth } from './context/AuthContext';
 import { CheckCircle2, ShieldAlert } from 'lucide-react';
 
 // Protected Route Guard with RBAC support
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, userOnly = false }) => {
   const { user, loading } = useAuth();
   const token = localStorage.getItem('finsec_access_token');
   const mockUserStr = localStorage.getItem('finsec_mock_user');
@@ -35,15 +35,18 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // RBAC gate: Admin routes are ONLY accessible by admins
-  if (adminOnly) {
-    const isAdmin =
-      effectiveUser?.role?.toLowerCase() === 'admin' ||
-      effectiveUser?.email?.toLowerCase().includes('admin');
+  const isAdmin =
+    effectiveUser?.role?.toLowerCase() === 'admin' ||
+    effectiveUser?.email?.toLowerCase().includes('admin');
 
-    if (!isAdmin) {
-      return <Navigate to="/dashboard" replace />;
-    }
+  // RBAC gate: Admin routes are ONLY accessible by admins
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // RBAC gate: User-only routes are ONLY accessible by regular users (admins redirected to /admin)
+  if (userOnly && isAdmin) {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
@@ -173,7 +176,7 @@ export function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute userOnly>
               <DashboardShell alertCount={alertCount}>
                 <DashboardPage
                   transactions={transactions}
@@ -202,7 +205,7 @@ export function App() {
         <Route
           path="/wallet"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute userOnly>
               <DashboardShell alertCount={alertCount}>
                 <div className="space-y-6">
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Wallet & Budget Management</h2>
@@ -217,7 +220,7 @@ export function App() {
         <Route
           path="/transactions"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute userOnly>
               <DashboardShell alertCount={alertCount}>
                 <div className="space-y-6">
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Encrypted Financial Ledger</h2>
@@ -239,7 +242,7 @@ export function App() {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute userOnly>
               <DashboardShell alertCount={alertCount}>
                 <ProfileSettings isOpen={true} onClose={() => {}} />
               </DashboardShell>

@@ -30,18 +30,17 @@ export const Sidebar = () => {
     navigate('/login');
   };
 
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Wallet', path: '/wallet', icon: Wallet },
-    { name: 'Transactions', path: '/transactions', icon: Receipt },
-    ...(isAdmin
-      ? [
-          { name: 'SOC Threat Map', path: '/admin', icon: ShieldAlert, badge: 'SOC' },
-          { name: 'Admin Panel', path: '/admin', icon: ShieldCheck, badge: 'ADMIN' }
-        ]
-      : []),
-    { name: 'Settings', path: '/settings', icon: Settings }
-  ];
+  const navItems = isAdmin
+    ? [
+        { name: 'SOC Threat Map', path: '/admin', icon: ShieldAlert, badge: 'SOC' },
+        { name: 'Platform Users', path: '/admin', icon: ShieldCheck, badge: 'ADMIN' }
+      ]
+    : [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { name: 'Wallet', path: '/wallet', icon: Wallet },
+        { name: 'Transactions', path: '/transactions', icon: Receipt },
+        { name: 'Settings', path: '/settings', icon: Settings }
+      ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200/80 p-6 flex flex-col justify-between shrink-0 min-h-screen">

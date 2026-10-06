@@ -1043,3 +1043,34 @@ Actions Taken:
 * append docs/logs.txt
 * run_command git commit
 * run_command git push origin main
+
+================================================================================
+[2026-10-06T14:42:35+05:30] Enforce Admin Role Restrictions & Add Transaction Manual Entry
+================================================================================
+User Prompt (verbatim):
+ok i want one change that for admin he should only see the map and the users else all features should be accesible only to user and in user dashboard add some transactions data and also a manual way to add a transaction and what it is spent for to show to judges, make these changes as fast as possible
+
+Agent Response:
+Implemented strict role-based access control (RBAC) separation:
+1. In the navigation sidebar, administrators only have access to "SOC Threat Map" and "Platform Users". All user features (Dashboard, Wallet, Transactions, Settings) are hidden from the admin navigation.
+2. Protected routes in App.jsx now enforce user-only boundaries: administrators attempting to access user pages (/dashboard, /wallet, /transactions, /settings) are redirected to /admin, while regular users cannot access /admin.
+3. In DashboardPage.jsx, populated rich realistic transaction history with explicit "what it was spent for" details, merchant/payee tags, amounts, and categories.
+4. Added an interactive "+ Add Transaction" modal directly on the user dashboard allowing live creation of debit/credit records with spending purpose ("Spent For"), category selection, and amount, instantly updating dashboard balances and metrics.
+
+Agent Response Summary:
+Enforced strict admin access limiting admin accounts solely to the threat map and registered users list. Populated user dashboard transactions with clear spending purpose details and built an interactive manual transaction creation modal to showcase live ledger entries to hackathon judges.
+
+Commit SHA:
+8cb7410
+
+Files Modified / Created:
+* src/frontend/src/components/Sidebar.jsx (Modified)
+* src/frontend/src/App.jsx (Modified)
+* src/frontend/src/pages/DashboardPage.jsx (Modified)
+
+Actions Taken:
+* Modified Sidebar.jsx to filter navigation items strictly based on role.
+* Updated App.jsx ProtectedRoute to enforce userOnly redirection for admins.
+* Updated DashboardPage.jsx with initial transaction records, live calculation, and interactive manual transaction modal.
+* Tested production build using vite build (exit code 0).
+* Committed changes and pushed to GitHub main branch.
