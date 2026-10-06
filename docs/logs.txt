@@ -815,7 +815,7 @@ Agent Response Summary:
 Successfully stabilized receipt vision, EXIF sanitization, honeypot demo telemetry, and SOC threat map rendering. Cleaned whitespace diffs, ran backend test suite (28/28 tests passed across 6 test suites), executed frontend production build (vite build succeeded in 21.61s), validated live security controls, and prepared single logical stabilization commit without pushing.
 
 Commit SHA:
-(pending commit creation)
+610a159
 
 Files Modified / Created:
 * src/backend/src/services/imageSanitizer.js (Created)
