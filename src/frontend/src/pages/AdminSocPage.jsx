@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import {
   ShieldAlert,
   Flame,
@@ -14,34 +12,10 @@ import {
   Filter,
   Users,
   ShieldCheck,
-  UserCheck,
-  UserX,
-  ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Activity,
+  Crosshair
 } from 'lucide-react';
-
-// Fix for default Leaflet icon paths in bundlers
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom pulsing red Leaflet DivIcon for live threat markers
-const createPulsingRedIcon = (label) => {
-  return L.divIcon({
-    className: 'custom-leaflet-threat-marker',
-    html: `
-      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: -16px; margin-top: -16px;">
-        <span style="position: absolute; width: 32px; height: 32px; border-radius: 9999px; background-color: #ef4444; opacity: 0.75; animation: radar-pulse 2s infinite;"></span>
-        <span style="position: relative; width: 14px; height: 14px; border-radius: 9999px; background-color: #dc2626; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);"></span>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
-  });
-};
 
 const INITIAL_LOGS = [
   { id: 1, ip: '185.220.101.5', type: 'SQL Injection', status: 'Blocked', time: '11:34:12 AM' },
@@ -51,8 +25,8 @@ const INITIAL_LOGS = [
 ];
 
 const INITIAL_MARKERS = [
-  { id: 'init-1', coords: [20.5937, 78.9629], type: 'Protected Core Gateway (Hyderabad, India)' },
-  { id: 'init-2', coords: [50.1109, 8.6821], type: 'Frankfurt Decoy Honeypot Trap' }
+  { id: 'init-1', x: 68, y: 46, label: 'Protected Core Gateway (Hyderabad, India)' },
+  { id: 'init-2', x: 50, y: 30, label: 'Frankfurt Decoy Honeypot Trap' }
 ];
 
 // TASK 3: Realistic Dummy Data for Admin Platform Users Table
@@ -99,8 +73,9 @@ export const AdminSocPage = () => {
 
     const newMarker = {
       id: 'sqli-' + Date.now(),
-      coords: [40.7128, -74.0060], // New York
-      type: 'SQL Injection Blocked (192.168.1.55 - New York)'
+      x: 27, // New York region on map
+      y: 35,
+      label: 'SQL Injection Blocked (192.168.1.55 - New York)'
     };
 
     setThreatLogs((prev) => [newLog, ...prev]);
@@ -121,8 +96,9 @@ export const AdminSocPage = () => {
 
     const newMarker = {
       id: 'honey-' + Date.now(),
-      coords: [55.7558, 37.6173], // Moscow
-      type: 'Honeypot Trap Triggered - IP Banned (10.0.0.12 - Moscow)'
+      x: 58, // Moscow region on map
+      y: 25,
+      label: 'Honeypot Trap Triggered - IP Banned (10.0.0.12 - Moscow)'
     };
 
     setThreatLogs((prev) => [newLog, ...prev]);
@@ -150,18 +126,15 @@ export const AdminSocPage = () => {
   // Filtered users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      // Status filter
-      if (statusFilter !== 'All' && u.status !== statusFilter) {
-        return false;
-      }
-      // Search query filter (matches ID, name, email, IP)
+      if (statusFilter !== 'All' && u.status !== statusFilter) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchId = u.id.toLowerCase().includes(q);
-        const matchName = u.name.toLowerCase().includes(q);
-        const matchEmail = u.email.toLowerCase().includes(q);
-        const matchIp = u.ip.toLowerCase().includes(q);
-        return matchId || matchName || matchEmail || matchIp;
+        return (
+          u.id.toLowerCase().includes(q) ||
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.ip.toLowerCase().includes(q)
+        );
       }
       return true;
     });
@@ -222,51 +195,73 @@ export const AdminSocPage = () => {
         </div>
       </div>
 
-      {/* TOP SECTION: React-Leaflet Map with OSM Tiles */}
-      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-3">
+      {/* TOP SECTION: Ultra-Reliable Cyber Threat Radar Canvas */}
+      <div className="bg-slate-950 rounded-3xl p-5 shadow-2xl border border-slate-800 space-y-3 text-white">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center space-x-2">
-            <Globe className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Interactive OpenStreetMap Threat Canvas
+            <Radio className="w-4 h-4 text-rose-500 animate-pulse" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Live Global Cyber Threat Radar
             </h3>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-            Center: [20.5937, 78.9629] • Zoom: 4
-          </span>
+          <div className="flex items-center space-x-3">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800 font-bold">
+              {mapMarkers.length} Active Targets
+            </span>
+            <span className="text-[10px] font-mono text-emerald-400 flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span>GRID LIVE</span>
+            </span>
+          </div>
         </div>
 
-        {/* Leaflet Map Container with Explicit Height */}
-        <div className="h-[500px] w-full rounded-2xl overflow-hidden border border-slate-200 relative z-10">
-          <MapContainer
-            center={[20.5937, 78.9629]}
-            zoom={4}
-            scrollWheelZoom={false}
-            className="h-full w-full"
-            style={{ height: '500px', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
+        {/* Map Container with High-Tech Dark Cyber Grid & Red Radar Dots */}
+        <div className="h-[420px] w-full rounded-2xl overflow-hidden border border-slate-800 relative bg-[#090d16] flex items-center justify-center">
+          {/* Subtle Cyber Radar Grid Lines */}
+          <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
+          <div className="absolute inset-0 border border-slate-800/40 pointer-events-none"></div>
 
-            {/* Map Markers for attacks */}
-            {mapMarkers.map((marker) => (
-              <Marker
-                key={marker.id}
-                position={marker.coords}
-                icon={createPulsingRedIcon(marker.type)}
-              >
-                <Popup>
-                  <div className="text-xs font-sans font-bold text-slate-900 p-1">
-                    <p className="text-rose-600 font-mono text-[10px] uppercase font-bold">Attack Coordinate</p>
-                    <p className="mt-0.5">{marker.type}</p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-1">Status: Mitigated & Banned</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+          {/* World Map SVG Outline in Cyber Neon */}
+          <svg
+            className="w-full h-full object-cover opacity-30 pointer-events-none"
+            viewBox="0 0 1000 500"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1.2"
+          >
+            {/* Americas */}
+            <path d="M150,100 Q200,80 250,120 T300,180 T250,250 T280,320 T240,420 T200,350 T180,220 Z" />
+            {/* Europe & Africa */}
+            <path d="M480,80 Q520,60 550,110 T520,180 T560,260 T520,380 T460,320 T480,200 Z" />
+            {/* Asia & Australia */}
+            <path d="M620,80 Q750,70 820,140 T880,220 T780,280 T800,380 T720,320 T650,200 Z" />
+          </svg>
+
+          {/* Coordinate Crosshairs */}
+          <div className="absolute top-4 left-4 text-[10px] font-mono text-cyan-400/80 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
+            RADAR: HYDERABAD-FRANKFURT-GLOBAL [20.59° N, 78.96° E]
+          </div>
+
+          {/* Dynamic Radar Threat Blips */}
+          {mapMarkers.map((marker) => (
+            <div
+              key={marker.id}
+              style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20"
+            >
+              {/* Outer Pulsing Ring */}
+              <span className="absolute -inset-3 rounded-full bg-rose-500/40 animate-ping"></span>
+              {/* Core Threat Dot */}
+              <span className="relative flex h-4 w-4 rounded-full bg-rose-600 border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.8)] items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+              </span>
+              {/* Tooltip on Hover / Pin */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/95 text-white border border-rose-500/50 px-3 py-1.5 rounded-xl text-[10px] font-mono shadow-xl transition-all pointer-events-none group-hover:scale-105">
+                <p className="font-bold text-rose-400 uppercase">⚠ Threat Blocked</p>
+                <p className="text-slate-200">{marker.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -316,9 +311,8 @@ export const AdminSocPage = () => {
         </div>
       </div>
 
-      {/* BOTTOM SECTION (NEW): "Platform Users" Data Table */}
+      {/* BOTTOM SECTION: "Platform Users" Data Table */}
       <div id="users-table" className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 space-y-6">
-        {/* Section Header with Quick Stats */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
@@ -333,7 +327,6 @@ export const AdminSocPage = () => {
             </p>
           </div>
 
-          {/* Quick Counter Badges */}
           <div className="flex items-center space-x-2">
             <span className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -346,9 +339,8 @@ export const AdminSocPage = () => {
           </div>
         </div>
 
-        {/* Filter & Search Bar Toolbar */}
+        {/* Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Search Input */}
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -358,17 +350,8 @@ export const AdminSocPage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
-              >
-                ✕
-              </button>
-            )}
           </div>
 
-          {/* Filter by Status Dropdown */}
           <div className="flex items-center space-x-2">
             <Filter className="w-4 h-4 text-slate-400 shrink-0" />
             <label className="text-xs font-bold text-slate-600 shrink-0">Filter Status:</label>
@@ -387,7 +370,7 @@ export const AdminSocPage = () => {
           </div>
         </div>
 
-        {/* Sleek Data Table */}
+        {/* Table */}
         <div className="overflow-x-auto rounded-2xl border border-slate-200">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 font-mono uppercase text-[10px] tracking-wider border-b border-slate-200">
@@ -418,21 +401,17 @@ export const AdminSocPage = () => {
                         isFlagged ? 'bg-rose-50/30' : ''
                       }`}
                     >
-                      {/* User ID */}
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                         <span className="px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
                           {u.id}
                         </span>
                       </td>
 
-                      {/* Name */}
                       <td className="py-3.5 px-4 whitespace-nowrap font-bold text-slate-900">
                         <div className="flex items-center space-x-2.5">
                           <div
                             className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
-                              isFlagged
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'bg-indigo-100 text-indigo-700'
+                              isFlagged ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
                             }`}
                           >
                             {u.name
@@ -448,23 +427,19 @@ export const AdminSocPage = () => {
                         </div>
                       </td>
 
-                      {/* Email */}
                       <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">
                         {u.email}
                       </td>
 
-                      {/* Account Balance */}
                       <td className="py-3.5 px-4 text-right font-black text-slate-900 whitespace-nowrap">
                         <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 font-mono">
                           {u.balance}
                         </span>
                       </td>
 
-                      {/* Status (Active / Flagged) */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
                           onClick={() => handleToggleStatus(u.id)}
-                          title="Click to toggle status"
                           className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm active:scale-95 ${
                             isFlagged
                               ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
@@ -485,15 +460,10 @@ export const AdminSocPage = () => {
                         </button>
                       </td>
 
-                      {/* Last Login IP */}
                       <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap text-xs">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                          <span className="font-semibold">{u.ip}</span>
-                        </div>
+                        {u.ip}
                       </td>
 
-                      {/* Quick Actions */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
                           onClick={() => handleToggleStatus(u.id)}
@@ -512,17 +482,6 @@ export const AdminSocPage = () => {
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Footer info banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-          <div>
-            Showing <span className="font-bold text-slate-700">{filteredUsers.length}</span> of{' '}
-            <span className="font-bold text-slate-700">{users.length}</span> platform users
-          </div>
-          <div className="font-mono text-[10px] text-slate-500">
-            RBAC Access Enforcement: Admin Security Clearance Level 4
-          </div>
         </div>
       </div>
     </div>
